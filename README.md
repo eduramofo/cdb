@@ -9,7 +9,7 @@ API de automação construída com **FastAPI + Playwright + SQLite** para resolv
 | 1 — RPA Challenge | ✅ Concluída (100%) | Automação web no [rpachallenge.com](https://rpachallenge.com) |
 | 2 — Carga Incremental HN | 🔜 Pendente | Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental |
 
-> **Documentação completa:** [docs/](docs/) — especificação, checklists, comprovação de testes.
+> **Documentação completa:** [docs/PARTE_1/](docs/PARTE_1/) — checklist, testes automatizados, avaliação final.
 
 ---
 
@@ -78,11 +78,15 @@ tests/
 └── test_rpa.py          # 16 testes (pytest): parse, mapeamento, seletor, retry
 
 docs/
-├── TESTE.md                                        # especificação original com progresso
-├── TESTE.pdf                                       # PDF original do teste
-├── TESTE_PARTE_1.md                                # checklist RPA Challenge (concluído)
-├── TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md           # comprovação 16/16 testes
-└── TESTE_PARTE_2.md                                # checklist HN API (pendente)
+├── TESTE.md                   # especificação original com progresso
+├── TESTE.pdf                  # PDF original do teste
+├── PARTE_1/
+│   ├── README.md              # checklist RPA Challenge (100% concluído)
+│   ├── TESTES_AUTOMATIZADOS.md # comprovação 16/16 testes
+│   └── AVALIACAO.md           # avaliação de conformidade final
+└── PARTE_2/
+    ├── README.md              # checklist HN API (pendente)
+    └── AVALIACAO.md           # status pendente
 
 artifacts/
 ├── rpa_result_*.png    # screenshots das execuções
@@ -135,7 +139,7 @@ Testes:            16/16 passando (uv run pytest)
 Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
 ```
 
-> Documentação completa dos testes: [docs/TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](docs/TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md)
+> Documentação completa: [docs/PARTE_1/](docs/PARTE_1/) — checklist, testes, avaliação.
 
 ---
 

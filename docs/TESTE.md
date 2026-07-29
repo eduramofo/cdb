@@ -40,7 +40,7 @@ Criar uma automação que acesse [https://rpachallenge.com/](https://rpachalleng
 
 **Resultado:** 100% (70/70 campos), ~5 segundos, Playwright + Chromium headless.
 
-> Checklist detalhado: [TESTE_PARTE_1.md](./TESTE_PARTE_1.md) | Testes: [TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](./TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md)
+> Checklist detalhado: [PARTE_1/README.md](./PARTE_1/README.md) | Testes: [PARTE_1/TESTES_AUTOMATIZADOS.md](./PARTE_1/TESTES_AUTOMATIZADOS.md) | Avaliação: [PARTE_1/AVALIACAO.md](./PARTE_1/AVALIACAO.md)
 
 ### Expectativas Técnicas
 
@@ -55,7 +55,7 @@ Criar uma automação que acesse [https://rpachallenge.com/](https://rpachalleng
 
 ### Checklist Resumido — RPA Challenge
 
-Todos os itens estão detalhados e marcados em [TESTE_PARTE_1.md](./TESTE_PARTE_1.md). Resumo:
+Todos os itens estão detalhados e marcados em [PARTE_1/README.md](./PARTE_1/README.md). Resumo:
 
 - [x] Setup e Infraestrutura (5/5)
 - [x] Navegação e Extração (5/5)
@@ -64,7 +64,7 @@ Todos os itens estão detalhados e marcados em [TESTE_PARTE_1.md](./TESTE_PARTE_
 - [x] Evidências e Resultado (3/3)
 - [x] Validação e Testes (4/4)
 
-Comprovação de testes: [TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](./TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md) — 16/16 passando.
+Comprovação de testes: [PARTE_1/TESTES_AUTOMATIZADOS.md](./PARTE_1/TESTES_AUTOMATIZADOS.md) — 16/16 passando.
 
 ---
 
@@ -74,7 +74,7 @@ Comprovação de testes: [TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](./TESTE_PARTE_1
 
 Implementar um processo incremental que consuma a API oficial do Hacker News, persista itens em base local e permita execuções repetidas sem duplicidade.
 
-> Checklist detalhado: [TESTE_PARTE_2.md](./TESTE_PARTE_2.md)
+> Checklist detalhado: [PARTE_2/README.md](./PARTE_2/README.md)
 
 **Base URL:** `https://hacker-news.firebaseio.com/v0/`
 
