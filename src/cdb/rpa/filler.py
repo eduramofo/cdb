@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -26,6 +27,9 @@ FIELD_MAP = {
     "Phone Number": "Phone Number",
 }
 
+_FILL_RETRIES = 3
+_FILL_BACKOFF_BASE = 1.0
+
 
 async def run_challenge(headed: bool = False) -> dict:
     records = get_all_records()
@@ -34,6 +38,7 @@ async def run_challenge(headed: bool = False) -> dict:
 
     browser, context, page = await launch_browser(headed=headed)
     start_time = time.time()
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     try:
         await page.goto(RPA_URL, wait_until="domcontentloaded")
@@ -49,7 +54,14 @@ async def run_challenge(headed: bool = False) -> dict:
                 await page.get_by_role("button", name="Submit").click()
                 logger.info(f"[{idx + 1}/{total}] OK: {record['first_name']} {record['last_name']}")
             except Exception as e:
-                errors.append({"index": idx, "record": record.get("first_name", "?"), "error": str(e)})
+                error_screenshot = await _save_error_screenshot(page, idx, timestamp)
+                entry = {
+                    "index": idx,
+                    "record": record.get("first_name", "?"),
+                    "error": str(e),
+                    "screenshot": error_screenshot,
+                }
+                errors.append(entry)
                 logger.error(f"[{idx + 1}/{total}] FAIL: {record.get('first_name', '?')} — {e}")
 
         await page.wait_for_timeout(3000)
@@ -58,7 +70,6 @@ async def run_challenge(headed: bool = False) -> dict:
         challenge_result = _parse_challenge_result(page_text)
 
         duration = round(time.time() - start_time, 2)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         result = {
             "status": "success" if challenge_result.get("rate") == 100 else "partial",
@@ -86,8 +97,22 @@ async def _fill_form(page: Page, record: dict) -> None:
     for db_field, form_label in FIELD_MAP.items():
         value = record.get(db_field.lower().replace(" ", "_"), "")
         if value:
-            locator = page.locator(f'label:text-is("{form_label}") + input')
-            await locator.fill(str(value))
+            await _fill_field_with_retry(page, form_label, str(value))
+
+
+async def _fill_field_with_retry(page: Page, label: str, value: str) -> None:
+    last_error = None
+    for attempt in range(1, _FILL_RETRIES + 1):
+        try:
+            locator = page.locator(f'label:text-is("{label}") + input')
+            await locator.fill(value)
+            return
+        except Exception as e:
+            last_error = e
+            logger.warning(f"Campo '{label}' tentativa {attempt}/{_FILL_RETRIES} falhou: {e}")
+            if attempt < _FILL_RETRIES:
+                await asyncio.sleep(_FILL_BACKOFF_BASE * attempt)
+    raise last_error
 
 
 def _parse_challenge_result(text: str) -> dict:
@@ -99,7 +124,15 @@ def _parse_challenge_result(text: str) -> dict:
             "correct": int(match.group(2)),
             "total": int(match.group(3)),
         }
-    return {"message": text.split("Congratulations!")[-1].strip().split("\n")[0] if "Congratulations!" in text else "unknown", "rate": 0, "correct": 0, "total": 0}
+    fallback = text.split("Congratulations!")[-1].strip().split("\n")[0] if "Congratulations!" in text else "unknown"
+    return {"message": fallback, "rate": 0, "correct": 0, "total": 0}
+
+
+async def _save_error_screenshot(page: Page, record_index: int, timestamp: str) -> str:
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    path = ARTIFACTS_DIR / f"rpa_error_{record_index}_{timestamp}.png"
+    await page.screenshot(path=str(path), full_page=True)
+    return str(path.name)
 
 
 async def _save_artifacts(page: Page, result: dict, timestamp: str) -> dict:

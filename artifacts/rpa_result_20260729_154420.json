@@ -1,0 +1,10 @@
+{
+  "status": "success",
+  "accuracy_pct": 100.0,
+  "duration_seconds": 4.77,
+  "records_total": 10,
+  "records_ok": 10,
+  "records_failed": 0,
+  "errors": [],
+  "artifacts": {}
+}

@@ -2,7 +2,7 @@
 
 > Criar uma automação que acesse [rpachallenge.com](https://rpachallenge.com/), obtenha a planilha do desafio e preencha todos os registros do formulário dinâmico com **100% de acurácia**, sem intervenção manual.
 
-**Status:** ✅ Concluída — 100% de acurácia (70/70 campos)
+**Status:** ✅ Concluída — 100% de acurácia (70/70 campos) | 14 testes passando
 
 ---
 
@@ -38,9 +38,9 @@
 
 ### Sincronização e Resiliência
 - [x] Usar explicit waits → Playwright `fill()` aguarda elemento visível e interativo automaticamente
-- [ ] Tratar timeouts com retry limitado → trata timeout com try/except mas sem retry por campo
+- [x] Tratar timeouts com retry limitado → 3 tentativas com backoff linear (1s → 2s → 3s)
 - [x] Logar cada registro processado (número, status)
-- [ ] Capturar e logar erros de preenchimento com screenshot do estado da tela → captura apenas screenshot final
+- [x] Capturar e logar erros de preenchimento com screenshot do estado da tela → screenshot salvo em `artifacts/rpa_error_{idx}_{timestamp}.png`
 
 ### Evidências e Resultado
 - [x] Capturar screenshot final com o resultado (tempo total, acurácia, mensagem de sucesso)
@@ -48,9 +48,9 @@
 - [x] Salvar evidências em `artifacts/` com nomes que incluam timestamp
 
 ### Validação e Testes
-- [ ] Teste de mapeamento de colunas (planilha → campos do formulário)
-- [ ] Teste de parse da planilha Excel
-- [ ] Teste de resiliência dos seletores (mock ou stub do DOM)
+- [x] Teste de mapeamento de colunas (planilha → campos do formulário) → 3 testes em `TestFieldMapping`
+- [x] Teste de parse da planilha Excel → 5 testes em `TestParseSpreadsheet`
+- [x] Teste de resiliência dos seletores (mock ou stub do DOM) → 3 testes em `TestSelectorResilience`
 - [x] Verificar que não há preenchimento manual, edição do DOM nem gravação frágil de passos → automação usa `fill()` nativo do Playwright
 
 ### Resultado da Execução Real
@@ -97,7 +97,4 @@ O formulário Angular do RPA Challenge não usa atributo `for` nos `<label>`, e 
 
 | Limitação | Impacto | Possível Melhoria |
 |-----------|---------|-------------------|
-| Sem retry por campo individual | Se um campo falhar, o registro é marcado como erro | Adicionar retry com backoff no `_fill_form` |
-| Screenshot apenas no final | Erros intermediários sem evidência visual | Capturar screenshot por registro com falha |
 | Seletor depende de `<label>` irmão adjacente | Se o DOM mudar estrutura, o seletor quebra | Fallback via `ng-reflect-dictionary-value` |
-| Sem testes automatizados | Sem cobertura formal do pipeline | Adicionar `pytest` com fixtures de DB e mocks do Playwright |

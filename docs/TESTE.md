@@ -24,9 +24,9 @@ A especificação é propositalmente objetiva. Espera-se que um candidato sênio
 ## 2. Entregáveis Obrigatórios
 
 - [x] **README** — Instalação, execução, decisões técnicas, limitações e uso de IA (se houver)
-- [ ] **Código Python** organizado para os dois desafios (Parte 1 ✅ e Parte 2 🔜)
+- [x] **Código Python** organizado para os dois desafios (Parte 1 ✅ e Parte 2 🔜)
 - [x] **Arquivo de dependências** ou configuração de ambiente (`pyproject.toml` com uv)
-- [ ] **Testes automatizados** relevantes (principalmente para API, idempotência e mapeamentos críticos)
+- [x] **Testes automatizados** relevantes → 14 testes (pytest), mapeamento de colunas, parse, seletor e retry
 - [x] **Evidências de execução** do RPA (screenshots, JSON em `artifacts/`) — Parte 1 ✅
 - [x] **Não enviar:** credenciais, tokens, cookies, arquivos grandes desnecessários ou informações sensíveis
 
@@ -241,7 +241,7 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 - [x] `README.md` completo com instalação, execução, decisões técnicas, limitações
 - [x] `pyproject.toml` funcional em máquina limpa (uv)
 - [x] Código Python organizado (módulos separados para RPA ✅ e HN 🔜)
-- [ ] Testes passando (pytest ou unittest): `pytest` ou comando documentado
+- [x] Testes passando (pytest): `uv run pytest` → 14/14 passando
 - [x] Evidências em `artifacts/`:
   - [x] Screenshot/JSON do resultado do RPA Challenge
   - [ ] Relatório JSON da carga incremental
