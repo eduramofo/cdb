@@ -2,7 +2,7 @@
 
 > Criar uma automação que acesse [rpachallenge.com](https://rpachallenge.com/), obtenha a planilha do desafio e preencha todos os registros do formulário dinâmico com **100% de acurácia**, sem intervenção manual.
 
-**Status:** ✅ Concluída — 100% de acurácia (70/70 campos) | 14 testes passando
+**Status:** ✅ Concluída — 100% de acurácia (70/70 campos) | 16 testes passando
 
 ---
 
@@ -81,11 +81,22 @@ src/cdb/db/
 
 ### Seletor Utilizado
 
-```python
-page.locator('label:text-is("First Name") + input')
-```
+Estratégia dupla com fallback automático:
 
-O CSS adjacent sibling `+ input` seleciona o `<input>` imediatamente após o `<label>` com texto exato. Isso garante que o campo seja encontrado por **significado** (texto do label), não por posição visual ou ID dinâmico.
+```python
+async def _locator_for_field(page, label):
+    # Primário — CSS adjacent sibling (funciona com o DOM atual)
+    primary = page.locator(f'label:text-is("{label}") + input')
+    if await primary.count() > 0:
+        return primary
+
+    # Fallback — atributo estrutural do componente Angular
+    fallback = page.locator(f'rpa1-field[ng-reflect-dictionary-value="{label}"] input')
+    if await fallback.count() > 0:
+        return fallback
+
+    raise Exception(f"Campo '{label}' não encontrado")
+```
 
 ### Por que não `page.get_by_label()`?
 
@@ -95,6 +106,10 @@ O formulário Angular do RPA Challenge não usa atributo `for` nos `<label>`, e 
 
 ## Limitações Conhecidas — Parte 1
 
-| Limitação | Impacto | Possível Melhoria |
-|-----------|---------|-------------------|
-| Seletor depende de `<label>` irmão adjacente | Se o DOM mudar estrutura, o seletor quebra | Fallback via `ng-reflect-dictionary-value` |
+_Nenhuma limitação crítica identificada._
+
+O seletor de campo usa estratégia dupla:
+1. **Primário** — `label:text-is("X") + input` (CSS adjacent sibling)
+2. **Fallback** — `rpa1-field[ng-reflect-dictionary-value="X"] input` (atributo estrutural Angular)
+
+Se nenhum dos dois corresponder, o campo é tratado como erro com retry e screenshot.

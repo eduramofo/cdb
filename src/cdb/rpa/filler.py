@@ -104,7 +104,7 @@ async def _fill_field_with_retry(page: Page, label: str, value: str) -> None:
     last_error = None
     for attempt in range(1, _FILL_RETRIES + 1):
         try:
-            locator = page.locator(f'label:text-is("{label}") + input')
+            locator = await _locator_for_field(page, label)
             await locator.fill(value)
             return
         except Exception as e:
@@ -113,6 +113,18 @@ async def _fill_field_with_retry(page: Page, label: str, value: str) -> None:
             if attempt < _FILL_RETRIES:
                 await asyncio.sleep(_FILL_BACKOFF_BASE * attempt)
     raise last_error
+
+
+async def _locator_for_field(page: Page, label: str):
+    primary = page.locator(f'label:text-is("{label}") + input')
+    if await primary.count() > 0:
+        return primary
+
+    fallback = page.locator(f'rpa1-field[ng-reflect-dictionary-value="{label}"] input')
+    if await fallback.count() > 0:
+        return fallback
+
+    raise Exception(f"Campo '{label}' não encontrado (nem label adjacente, nem ng-reflect-dictionary-value)")
 
 
 def _parse_challenge_result(text: str) -> dict:

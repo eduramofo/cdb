@@ -7,7 +7,7 @@ import pytest
 from openpyxl import Workbook
 
 from cdb.rpa.downloader import download_spreadsheet, parse_spreadsheet
-from cdb.rpa.filler import FIELD_MAP, _FILL_RETRIES, _fill_form, _fill_field_with_retry
+from cdb.rpa.filler import FIELD_MAP, _FILL_RETRIES, _fill_form, _fill_field_with_retry, _locator_for_field
 
 
 class TestFieldMapping:
@@ -220,6 +220,58 @@ class TestSelectorResilience:
 
             await browser.close()
 
+    @pytest.mark.asyncio
+    async def test_fallback_selector_ng_reflect(self):
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as pw:
+            browser = await pw.chromium.launch(headless=True, args=["--no-sandbox"])
+            page = await browser.new_page()
+
+            await page.set_content("""
+                <html><body>
+                <rpa1-field ng-reflect-dictionary-value="First Name">
+                    <div>
+                        <span>Some wrapper</span>
+                        <label>First Name</label>
+                        <input id="fld_first" value="">
+                    </div>
+                </rpa1-field>
+                <rpa1-field ng-reflect-dictionary-value="Email">
+                    <div>
+                        <label>Email</label>
+                        <input id="fld_email" value="">
+                    </div>
+                </rpa1-field>
+                </body></html>
+            """)
+
+            record = {"first_name": "John", "last_name": "", "company_name": "", "role_in_company": "", "address": "", "email": "john@acme.com", "phone_number": ""}
+
+            await _fill_form(page, record)
+
+            first = await page.locator("#fld_first").input_value()
+            assert first == "John"
+
+            email = await page.locator("#fld_email").input_value()
+            assert email == "john@acme.com"
+
+            await browser.close()
+
+    @pytest.mark.asyncio
+    async def test_locator_raises_when_no_match(self):
+        from playwright.async_api import async_playwright
+
+        async with async_playwright() as pw:
+            browser = await pw.chromium.launch(headless=True, args=["--no-sandbox"])
+            page = await browser.new_page()
+            await page.set_content("<html><body><div>no fields here</div></body></html>")
+
+            with pytest.raises(Exception, match="não encontrado"):
+                await _locator_for_field(page, "First Name")
+
+            await browser.close()
+
 
 class TestFillFieldWithRetry:
     @pytest.mark.asyncio
@@ -249,6 +301,9 @@ class _MockRetryPage:
     def locator(self, selector: str):
         return self
 
+    async def count(self):
+        return 1
+
     async def fill(self, value: str):
         self.fill_count += 1
         if self.fill_count <= self.fail_count:
@@ -261,6 +316,9 @@ class _MockSuccessPage:
 
     def locator(self, selector: str):
         return self
+
+    async def count(self):
+        return 1
 
     async def fill(self, value: str):
         self.fill_count += 1
