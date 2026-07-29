@@ -76,3 +76,17 @@ def get_all_records() -> list[dict]:
     rows = conn.execute("SELECT * FROM challenge_records ORDER BY id").fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def get_record_count() -> int:
+    conn = get_connection()
+    row = conn.execute("SELECT COUNT(*) as cnt FROM challenge_records").fetchone()
+    conn.close()
+    return row["cnt"]
+
+
+def clear_records() -> None:
+    conn = get_connection()
+    conn.execute("DELETE FROM challenge_records")
+    conn.commit()
+    conn.close()
