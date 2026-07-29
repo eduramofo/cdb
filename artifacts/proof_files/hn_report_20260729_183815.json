@@ -1,0 +1,13 @@
+{
+  "start_time": "2026-07-29T18:38:11.741783+00:00",
+  "end_time": "2026-07-29T18:38:15.629095+00:00",
+  "duration_seconds": 3.89,
+  "range_start": 49101309,
+  "range_end": 49101316,
+  "total_consulted": 8,
+  "inserted": 7,
+  "updated": 0,
+  "ignored": 1,
+  "failed": 0,
+  "failed_ids": []
+}

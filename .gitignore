@@ -219,4 +219,4 @@ __marimo__/
 
 # Project-specific
 artifacts/*
-!artifacts/.gitkeep
+!artifacts/proof_files
