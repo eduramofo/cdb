@@ -9,6 +9,8 @@ API de automação construída com **FastAPI + Playwright + SQLite** para resolv
 | 1 — RPA Challenge | ✅ Concluída (100%) | Automação web no [rpachallenge.com](https://rpachallenge.com) |
 | 2 — Carga Incremental HN | 🔜 Pendente | Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental |
 
+> **Documentação completa:** [docs/](docs/) — especificação, checklists, comprovação de testes.
+
 ---
 
 ## Stack Tecnológica
@@ -48,6 +50,12 @@ uv run cdb
 
 Acesse **http://localhost:8000** — redireciona para o Swagger UI.
 
+### Executar Testes
+
+```bash
+uv run pytest -v
+```
+
 ---
 
 ## Estrutura do Projeto
@@ -65,6 +73,20 @@ src/cdb/
     ├── __init__.py
     ├── database.py      # SQLite: init, CRUD, reset
     └── models.py        # Pydantic schemas
+
+tests/
+└── test_rpa.py          # 16 testes (pytest): parse, mapeamento, seletor, retry
+
+docs/
+├── TESTE.md                                        # especificação original com progresso
+├── TESTE.pdf                                       # PDF original do teste
+├── TESTE_PARTE_1.md                                # checklist RPA Challenge (concluído)
+├── TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md           # comprovação 16/16 testes
+└── TESTE_PARTE_2.md                                # checklist HN API (pendente)
+
+artifacts/
+├── rpa_result_*.png    # screenshots das execuções
+└── rpa_result_*.json   # resultados estruturados
 ```
 
 ---
@@ -109,8 +131,11 @@ Status:            success
 Acurácia:          100% (70/70 campos)
 Registros:         10 processados
 Tempo:             ~5 segundos (headless)
+Testes:            16/16 passando (uv run pytest)
 Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
 ```
+
+> Documentação completa dos testes: [docs/TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](docs/TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md)
 
 ---
 
@@ -124,7 +149,12 @@ Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
 
 ### Por que `label:text-is("X") + input` (CSS adjacent sibling)?
 
-O formulário do RPA Challenge é Angular e os `<label>` não têm atributo `for`. O `page.get_by_label()` do Playwright não consegue associar label→input nesse caso. O seletor CSS `label:text-is("X") + input` encontra o `<input>` imediatamente após o `<label>` com texto exato — funciona independente da ordem visual dos campos.
+O formulário do RPA Challenge é Angular e os `<label>` não têm atributo `for`. O `page.get_by_label()` do Playwright não consegue associar label→input nesse caso. A estratégia de seleção usa **dupla abordagem com fallback automático**:
+
+1. **Primário**: `label:text-is("X") + input` — CSS adjacent sibling, rápido e direto
+2. **Fallback**: `rpa1-field[ng-reflect-dictionary-value="X"] input` — atributo estrutural do componente Angular, caso o DOM mude a relação label-input
+
+Se nenhum dos dois encontrar o campo, o erro é tratado com retry (3 tentativas) e screenshot do estado da página.
 
 ### Por que API e não script CLI?
 
@@ -134,8 +164,7 @@ FastAPI oferece Swagger auto-gerado, o que demonstra profissionalismo na apresen
 
 ## Limitações Conhecidas
 
-- **Parte 1**: O seletor CSS `+ input` assume que o input é irmão adjacente imediato do label. Se o HTML mudar a relação DOM, o seletor quebra. Um fallback via `xpath=//label[text()="X"]/following-sibling::input` ou busca pelo `ng-reflect-dictionary-value` resolveria.
-- **Parte 1**: Sem retry automático em caso de timeout no preenchimento de campo individual.
+- **Parte 1**: Nenhuma limitação crítica. O seletor tem fallback automático (`ng-reflect-dictionary-value`), retry com backoff (3 tentativas, 1s/2s/3s), screenshot por erro e 16 testes automatizados.
 - **Parte 2**: Ainda não implementada.
 
 ---

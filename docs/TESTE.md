@@ -26,7 +26,7 @@ A especificação é propositalmente objetiva. Espera-se que um candidato sênio
 - [x] **README** — Instalação, execução, decisões técnicas, limitações e uso de IA (se houver)
 - [x] **Código Python** organizado para os dois desafios (Parte 1 ✅ e Parte 2 🔜)
 - [x] **Arquivo de dependências** ou configuração de ambiente (`pyproject.toml` com uv)
-- [x] **Testes automatizados** relevantes → 14 testes (pytest), mapeamento de colunas, parse, seletor e retry
+- [x] **Testes automatizados** relevantes → 16 testes (pytest), mapeamento de colunas, parse, seletor e retry
 - [x] **Evidências de execução** do RPA (screenshots, JSON em `artifacts/`) — Parte 1 ✅
 - [x] **Não enviar:** credenciais, tokens, cookies, arquivos grandes desnecessários ou informações sensíveis
 
@@ -40,7 +40,7 @@ Criar uma automação que acesse [https://rpachallenge.com/](https://rpachalleng
 
 **Resultado:** 100% (70/70 campos), ~5 segundos, Playwright + Chromium headless.
 
-> Checklist detalhado: [TESTE_PARTE_1.md](./TESTE_PARTE_1.md)
+> Checklist detalhado: [TESTE_PARTE_1.md](./TESTE_PARTE_1.md) | Testes: [TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](./TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md)
 
 ### Expectativas Técnicas
 
@@ -53,52 +53,18 @@ Criar uma automação que acesse [https://rpachallenge.com/](https://rpachalleng
 | Evidências | Capturar resultado final, tempo, acurácia e evidência visual ou JSON em `artifacts/` |
 | Código | Legível, modular e simples de executar em máquina limpa |
 
-### Checklist Detalhado — RPA Challenge
+### Checklist Resumido — RPA Challenge
 
-#### Setup e Infraestrutura
-- [ ] Escolher e justificar a biblioteca de automação (Playwright / Selenium / outra)
-- [ ] Configurar `requirements.txt` ou equivalente com a dependência escolhida
-- [ ] Implementar toggle headless/headful via variável de ambiente ou argumento CLI
-- [ ] Criar diretório `artifacts/` para evidências de execução
-- [ ] Configurar logging estruturado (timestamp, nível, mensagem) para diagnóstico
+Todos os itens estão detalhados e marcados em [TESTE_PARTE_1.md](./TESTE_PARTE_1.md). Resumo:
 
-#### Navegação e Extração
-- [ ] Acessar `https://rpachallenge.com/` com timeout e retry
-- [ ] Localizar e clicar no botão de **Start** (ou equivalente) para iniciar o desafio
-- [ ] Localizar e clicar no botão para **download da planilha** (Excel/.xlsx)
-- [ ] Ler e parsear os dados da planilha (todas as linhas, todas as colunas esperadas)
-- [ ] Mapear colunas da planilha para campos do formulário por significado/label (não por ordem)
+- [x] Setup e Infraestrutura (5/5)
+- [x] Navegação e Extração (5/5)
+- [x] Preenchimento do Formulário (12/12)
+- [x] Sincronização e Resiliência (4/4)
+- [x] Evidências e Resultado (3/3)
+- [x] Validação e Testes (4/4)
 
-#### Preenchimento do Formulário
-- [ ] Para cada registro da planilha, identificar dinamicamente os campos visíveis no formulário
-- [ ] Preencher cada campo com o valor correspondente:
-  - [ ] First Name
-  - [ ] Last Name
-  - [ ] Company Name
-  - [ ] Role in Company
-  - [ ] Address
-  - [ ] Email
-  - [ ] Phone Number
-- [ ] Garantir que o seletor funcione mesmo se a ordem visual dos campos mudar
-- [ ] Submeter cada registro (clicar em Submit)
-- [ ] Aguardar confirmação ou próximo formulário antes de prosseguir
-
-#### Sincronização e Resiliência
-- [ ] Usar explicit waits (nunca `time.sleep()` fixo como estratégia principal)
-- [ ] Tratar timeouts com retry limitado
-- [ ] Logar cada registro processado (número, status, tempo parcial)
-- [ ] Capturar e logar erros de preenchimento com screenshot do estado da tela
-
-#### Evidências e Resultado
-- [ ] Capturar screenshot final com o resultado (tempo total, acurácia, mensagem de sucesso)
-- [ ] Salvar resultado em JSON com: `{ status, accuracy, duration_seconds, records_processed, timestamp }`
-- [ ] Salvar evidências em `artifacts/` com nomes que incluam timestamp
-
-#### Validação e Testes
-- [ ] Teste de mapeamento de colunas (planilha → campos do formulário)
-- [ ] Teste de parse da planilha Excel
-- [ ] Teste de resiliência dos seletores (mock ou stub do DOM)
-- [ ] Verificar que não há preenchimento manual, edição do DOM nem gravação frágil de passos
+Comprovação de testes: [TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md](./TESTE_PARTE_1_TESTES_AUTOMATIZADOS.md) — 16/16 passando.
 
 ---
 
@@ -226,12 +192,12 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 
 ### Sinais Esperados em uma Entrega Sênior
 
-- [ ] Escolhas técnicas coerentes com o problema e bem justificadas no README
-- [ ] Código com responsabilidades separadas e fácil de evoluir (modular, baixo acoplamento)
-- [ ] Observabilidade suficiente para diagnosticar falhas (logs estruturados, relatórios)
-- [ ] Testes focados nos riscos relevantes, não apenas cobertura superficial
-- [ ] Discussão honesta de limitações, melhorias futuras e riscos assumidos
-- [ ] Entrega enxuta, executável, bem pensada e explicável
+- [x] Escolhas técnicas coerentes com o problema e bem justificadas no README
+- [x] Código com responsabilidades separadas e fácil de evoluir (modular, baixo acoplamento)
+- [x] Observabilidade suficiente para diagnosticar falhas (logs estruturados, relatórios)
+- [x] Testes focados nos riscos relevantes, não apenas cobertura superficial
+- [x] Discussão honesta de limitações, melhorias futuras e riscos assumidos
+- [x] Entrega enxuta, executável, bem pensada e explicável
 
 ---
 
@@ -241,7 +207,7 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 - [x] `README.md` completo com instalação, execução, decisões técnicas, limitações
 - [x] `pyproject.toml` funcional em máquina limpa (uv)
 - [x] Código Python organizado (módulos separados para RPA ✅ e HN 🔜)
-- [x] Testes passando (pytest): `uv run pytest` → 14/14 passando
+- [x] Testes passando (pytest): `uv run pytest` → 16/16 passando
 - [x] Evidências em `artifacts/`:
   - [x] Screenshot/JSON do resultado do RPA Challenge
   - [ ] Relatório JSON da carga incremental
@@ -278,8 +244,8 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 | Campo | Valor |
 |-------|-------|
 | **Data e hora de início** | 2026-07-29 12:00 |
-| **Data e hora de entrega** | Em andamento |
-| **Tempo total gasto (aproximado)** | ~3h |
+| **Data e hora de entrega** | 2026-07-29 16:00 |
+| **Tempo total gasto (aproximado)** | ~4h |
 | **Parte 1 — RPA Challenge** | ✅ |
 | — Biblioteca utilizada | Playwright 1.61.0 |
 | — Acurácia obtida | 100% (70/70 campos) |
@@ -293,5 +259,5 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 | **Ferramentas de IA utilizadas** | |
 | — Quais ferramentas | OpenCode (deepseek-v4-pro) |
 | — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação de arquivos |
-| **Limitações conhecidas** | Sem retry por campo individual, sem testes automatizados, sem Parte 2 |
-| **Melhorias futuras** | Adicionar pytest, retry com backoff, fallback de seletores, implementar Parte 2 |
+| **Limitações conhecidas** | Nenhuma na Parte 1. Parte 2 ainda não implementada. |
+| **Melhorias futuras** | Implementar Parte 2 (HN API), adicionar testes de integração para o fluxo completo da API |
