@@ -49,14 +49,15 @@ const AppArtifacts = {
             let html = '<div class="table-container"><table><thead><tr>';
             ['Arquivo', 'Tamanho', 'Criado em', 'Ações'].forEach(h => html += `<th>${h}</th>`);
             html += '</tr></thead><tbody>';
-            this.files.forEach(f => {
+            this.files.forEach((f, index) => {
                 const date = new Date(f.modified * 1000).toLocaleString('pt-BR');
                 const icon = f.extension === '.png' ? '📷' : f.extension === '.json' ? '📄' : '📝';
+                const displayName = f.relative_path || f.name;
                 html += `<tr>
-                    <td><span style="margin-right:6px;">${icon}</span><code>${App.esc(f.name)}</code></td>
+                    <td><span style="margin-right:6px;">${icon}</span><code>${App.esc(displayName)}</code></td>
                     <td>${App.esc(f.size_human)}</td>
                     <td class="text-sm text-muted">${date}</td>
-                    <td><button class="btn btn-sm" onclick="AppArtifacts.preview('${App.esc(f.name)}')">Visualizar</button></td>
+                    <td><button class="btn btn-sm" onclick="AppArtifacts.previewByIndex(${index})">Visualizar</button></td>
                 </tr>`;
             });
             html += '</tbody></table></div>';
@@ -66,20 +67,28 @@ const AppArtifacts = {
         }
     },
 
-    async preview(filename) {
+    previewByIndex(index) {
+        const file = this.files[index];
+        if (file) this.preview(file);
+    },
+
+    async preview(file) {
         const modal = document.getElementById('artifact-modal');
         const title = document.getElementById('artifact-modal-title');
         const body = document.getElementById('artifact-modal-body');
-        title.textContent = filename;
+        const artifactPath = typeof file === 'string'
+            ? file
+            : (file.relative_path || (file.path || '').replace(/^artifacts\//, '') || file.name);
+        title.textContent = artifactPath;
         body.innerHTML = '<div class="loading"><span class="spinner"></span> Carregando...</div>';
         modal.classList.add('active');
 
-        const ext = filename.split('.').pop().toLowerCase();
-        const url = `/artifacts/${filename}`;
+        const ext = artifactPath.split('.').pop().toLowerCase();
+        const url = `/artifacts/${artifactPath.split('/').map(encodeURIComponent).join('/')}`;
 
         try {
             if (ext === 'png') {
-                body.innerHTML = `<img src="${url}" alt="${App.esc(filename)}" style="max-width:100%;border-radius:4px;">`;
+                body.innerHTML = `<img src="${App.esc(url)}" alt="${App.esc(artifactPath)}" style="max-width:100%;border-radius:4px;">`;
             } else {
                 const res = await fetch(url);
                 const text = await res.text();

@@ -106,7 +106,7 @@ Além dos testes automatizados, o RPA Challenge foi executado contra o site real
 Status:            success
 Acurácia:          100% (70/70 campos)
 Registros:         10 processados
-Tempo:             ~5 segundos (headless)
+Tempo:             ~6 segundos (headless, evidências entre 5.65s e 6.59s)
 Mensagem:          "Your success rate is 100% (70 out of 70 fields)"
-Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
+Evidências:        artifacts/proof_files/rpa_result_*.png + artifacts/proof_files/rpa_result_*.json
 ```

@@ -164,6 +164,7 @@ const Dashboard = {
                     <p style="font-size:13px;color:var(--text-muted);line-height:1.7;margin-top:8px;">
                         API de automação com <strong>FastAPI + Playwright + SQLite</strong>,
                         desenvolvida para o teste técnico de <strong>Desenvolvedor Sênior de Automação e Integração</strong>.
+                        O dashboard é uma camada extra de apresentação, adicionada para facilitar a avaliação pública.
                     </p>
                 </div>
                 <div class="card info">
@@ -189,8 +190,12 @@ const Dashboard = {
                         <thead><tr><th>Marco</th><th>Data</th></tr></thead>
                         <tbody>
                             <tr><td>Início do projeto</td><td>29/07/2026 11:52</td></tr>
-                            <tr><td>Conclusão da Etapa 1 (RPA)</td><td>29/07/2026 13:28</td></tr>
-                            <tr><td>Conclusão da Etapa 2 (HN)</td><td>29/07/2026 14:06</td></tr>
+                            <tr><td>RPA Challenge 100%</td><td>29/07/2026 12:51</td></tr>
+                            <tr><td>Parte 1 documentada</td><td>29/07/2026 13:28</td></tr>
+                            <tr><td>Parte 2 HN API</td><td>29/07/2026 14:29</td></tr>
+                            <tr><td>Mini-frontend dashboard</td><td>29/07/2026 15:01</td></tr>
+                            <tr><td>Docker/deploy público</td><td>29/07/2026 15:55</td></tr>
+                            <tr><td>Revisão final</td><td>29/07/2026 16:16</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -248,8 +253,8 @@ const Dashboard = {
 
         document.getElementById('dash-card-tests').innerHTML = `
             <div class="card-label">Testes Automatizados</div>
-            <div class="card-value">37</div>
-            <div class="card-detail">16 RPA + 21 HN = 100% passando</div>
+            <div class="card-value">44</div>
+            <div class="card-detail">16 RPA + 28 HN = 100% passando</div>
         `;
     },
 };

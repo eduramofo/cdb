@@ -13,8 +13,8 @@
 | README com instalação, execução, decisões técnicas, limitações, IA | ✅ | `README.md` — atualizado com endpoints HN, resultados, estrutura |
 | Código Python organizado para os dois desafios | ✅ | `src/cdb/hn/` — 4 arquivos modulares (client, loader, models, init) |
 | Banco de dados local (SQLite) | ✅ | `hn_items` + `watermark` em `artifacts/hn_data.db` |
-| Testes automatizados relevantes | ✅ | `tests/test_hn.py` — 21/21 passando |
-| Evidências de execução | ✅ | `artifacts/hn_report_*.json` + `hn_report_*.txt` |
+| Testes automatizados relevantes | ✅ | `tests/test_hn.py` — 28/28 passando |
+| Evidências de execução | ✅ | `artifacts/proof_files/hn_report_*.json` + `hn_report_*.txt` |
 | Sem credenciais/segredos | ✅ | Nenhum arquivo sensível no repositório |
 
 ---
@@ -29,7 +29,7 @@
 | Persistência com chave única | ✅ | `id` como PRIMARY KEY, UPSERT via `INSERT ... ON CONFLICT UPDATE` |
 | Dados consultáveis + JSON bruto | ✅ | 17 colunas dedicadas (incluindo `deleted`, `dead`, `poll`, `parts`) + `raw_json` |
 | Resiliência: itens nulos | ✅ | API retorna `null` → contabilizado como "ignorado" |
-| Resiliência: itens deletados | ✅ | `deleted: true` → contabilizado como "ignorado", não persiste |
+| Resiliência: itens deletados | ✅ | `deleted: true` → loader contabiliza como "ignorado" e não persiste; UPSERT suporta `deleted=1` em teste unitário |
 | Resiliência: itens mortos | ✅ | `dead: true` → persistido com flag |
 | Resiliência: timeouts | ✅ | 30s por request HTTP |
 | Resiliência: retries com backoff | ✅ | 3 tentativas com backoff exponencial (1s → 2s → 4s) |
@@ -75,24 +75,22 @@ uv run pytest tests/test_hn.py -v
 ## 5. Execução Real
 
 ```
-POST /api/v1/hn/load?limit=5
+Execuções reais versionadas em artifacts/proof_files/
 ============================================================
-Início:      2026-07-29T17:06:24
-Fim:          2026-07-29T17:06:26
-Duração:     1.7s
-Faixa:       49100139 → 49100143
+Faixas:      49101298 → 49101316
 ────────────────────────────────────────────────────────────
-Consultados: 5
-Inseridos:   5
+Consultados: 19
+Inseridos:   18
 Atualizados: 0
-Ignorados:   0
+Ignorados:   1
 Falhas:      0
+Duração:     0.6s a 3.89s por execução
 ============================================================
 ```
 
-**Idempotência confirmada** — 2ª execução: 0 inseridos, 0 atualizados, 0 duplicados.
+**Idempotência confirmada** por testes automatizados de UPSERT e pelo watermark incremental, que evita reprocessar IDs já consumidos.
 
-Evidências salvas em `artifacts/`:
+Evidências versionadas em `artifacts/proof_files/`:
 - `hn_report_*.json` — relatório estruturado
 - `hn_report_*.txt` — sumário textual
 
@@ -144,7 +142,7 @@ Se o watermark só avançasse após processamento contíguo (sem gaps), um únic
 
 ## 9. Limitações
 
-- **Carga full sem `--limit`** (todos os ~49M de itens) pode levar horas devido ao rate limit de 100ms/request. Funcional, mas não prático para demonstração.
+- **Carga full sem `limit`** (todos os ~49M de itens) pode levar horas devido ao rate limit de 100ms/request. Funcional, mas não prático para demonstração.
 - **Sem paralelismo** — requests são sequenciais para respeitar a API pública do HN.
 - **Banco SQLite** — adequado para o escopo do teste, mas não escala para produção com milhões de registros.
 

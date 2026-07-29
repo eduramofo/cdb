@@ -14,7 +14,7 @@
 | Código Python organizado para os dois desafios | ✅ | `src/cdb/` — 7 arquivos modulares |
 | Arquivo de dependências | ✅ | `pyproject.toml` com `uv` |
 | Testes automatizados relevantes | ✅ | `tests/test_rpa.py` — 16/16 passando |
-| Evidências de execução | ✅ | `artifacts/rpa_result_*.png` + `*.json` |
+| Evidências de execução | ✅ | `artifacts/proof_files/rpa_result_*.png` + `*.json` |
 | Sem credenciais/segredos | ✅ | Nenhum arquivo sensível no repositório |
 
 ---
@@ -68,11 +68,11 @@ uv run pytest -v
 Status:            success
 Acurácia:          100% (70/70 campos)
 Registros:         10 processados
-Tempo:             ~5 segundos (headless)
+Tempo:             ~6 segundos (headless, evidências entre 5.65s e 6.59s)
 Mensagem:          "Your success rate is 100% (70 out of 70 fields)"
 ```
 
-Evidências salvas em `artifacts/`:
+Evidências versionadas em `artifacts/proof_files/`:
 - `rpa_result_*.png` — screenshot final
 - `rpa_result_*.json` — resultado estruturado
 
@@ -95,4 +95,4 @@ Evidências salvas em `artifacts/`:
 
 Nenhuma limitação crítica na Parte 1. O seletor tem fallback automático, retry com backoff, screenshot por erro e cobertura de testes.
 
-**Única pendência:** Parte 2 (Carga Incremental Hacker News) ainda não implementada — será feita em etapa separada.
+Parte 2 também foi concluída e está documentada em `docs/PARTE_2/`.

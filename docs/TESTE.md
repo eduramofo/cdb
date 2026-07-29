@@ -31,6 +31,8 @@ A especificação é propositalmente objetiva. Espera-se que um candidato sênio
 - [x] **Evidências de execução** do HN (relatórios JSON/TXT em `artifacts/`) — Parte 2 ✅
 - [x] **Não enviar:** credenciais, tokens, cookies, arquivos grandes desnecessários ou informações sensíveis
 
+> Extra de apresentação: foi adicionado um mini-frontend em HTML/CSS/JS vanilla, não solicitado na especificação, para facilitar a avaliação pública pelo recrutador.
+
 ---
 
 ## 3. Parte 1 — Automação RPA com Python (Peso: 40%) ✅ CONCLUÍDA
@@ -39,7 +41,7 @@ A especificação é propositalmente objetiva. Espera-se que um candidato sênio
 
 Criar uma automação que acesse [https://rpachallenge.com/](https://rpachallenge.com/), obtenha a planilha do desafio e preencha todos os registros do formulário dinâmico com **100% de acurácia**, sem intervenção manual.
 
-**Resultado:** 100% (70/70 campos), ~5 segundos, Playwright + Chromium headless.
+**Resultado:** 100% (70/70 campos), ~6 segundos, Playwright + Chromium headless.
 
 > Checklist detalhado: [PARTE_1/README.md](./PARTE_1/README.md) | Testes: [PARTE_1/TESTES_AUTOMATIZADOS.md](./PARTE_1/TESTES_AUTOMATIZADOS.md) | Avaliação: [PARTE_1/AVALIACAO.md](./PARTE_1/AVALIACAO.md)
 
@@ -127,11 +129,11 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 - [x] Implementar escrita do watermark após processamento bem-sucedido
 - [x] Definir estratégia de atualização do watermark:
   - [x] Atualizar após cada batch (50 itens), com registro de IDs com falha para relatório
-- [x] Na primeira execução (sem watermark), permitir carga inicial com `--limit N`
+- [x] Na primeira execução (sem watermark), permitir carga inicial com query param `?limit=N`
 
 #### Consumo da API
 - [x] Obter `maxitem.json` para descobrir o maior ID disponível
-- [x] Calcular intervalo a processar: `[last_processed_id + 1, maxitem]` ou limitado por `--limit`
+- [x] Calcular intervalo a processar: `[last_processed_id + 1, maxitem]` ou limitado por `?limit=N`
 - [x] Para cada ID no intervalo, fazer `GET /item/{id}.json`
 - [x] Implementar retry com backoff exponencial (3 tentativas, 1s/2s/4s)
 - [x] Tratar timeouts (timeout por request: 30s)
@@ -208,6 +210,7 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 - [x] Evidências em `artifacts/`:
   - [x] Screenshot/JSON do resultado do RPA Challenge
   - [x] Relatório JSON/TXT da carga incremental HN
+  - [x] Evidências versionadas em `artifacts/proof_files/`
 - [x] `.gitignore` configurado (excluir `__pycache__`, `.env`, `*.db`, `artifacts/*` exceto evidências)
 - [x] Nenhum arquivo sensível (credenciais, tokens, cookies)
 - [x] Código sem comentários de TODO soltos
@@ -240,25 +243,25 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 
 | Campo | Valor |
 |-------|-------|
-| **Data e hora de início** | 2026-07-29 12:00 |
-| **Data e hora de entrega** | 2026-07-29 14:06 |
+| **Data e hora de início** | 2026-07-29 11:52 |
+| **Data e hora de entrega final** | 2026-07-29 16:16 |
 | **Projeto público** | [https://cdb-ff94.onrender.com/](https://cdb-ff94.onrender.com/) |
-| **Tempo total gasto (aproximado)** | ~2h06min |
+| **Tempo total versionado (aproximado)** | ~4h24min |
+| **Frontend de apresentação** | Incluído como extra não solicitado para facilitar a avaliação pública |
 | **Parte 1 — RPA Challenge** | ✅ |
 | — Biblioteca utilizada | Playwright 1.61.0 |
 | — Acurácia obtida | 100% (70/70 campos) |
-| — Tempo de execução | ~5 segundos (headless) |
+| — Tempo de execução | ~6 segundos (headless, evidências entre 5.65s e 6.59s) |
 | — Executou headless? | Sim (padrão); headed via `?headed=true` |
 | **Parte 2 — Carga Incremental HN** | ✅ |
 | — Banco utilizado | SQLite (hn_items + watermark) |
 | — Biblioteca HTTP | httpx (já existente no projeto) |
-| — Itens processados (carga inicial) | 5 (teste ao vivo com ?limit=5) |
-| — Itens processados (incremento) | 0 (idempotência: watermark já em 49100143) |
-| — Total inseridos / atualizados / falhas | 5 / 0 / 0 |
-| — Tempo de execução (5 itens) | ~1.7 segundos |
+| — Evidências versionadas | 3 execuções em `artifacts/proof_files/` |
+| — Total consultados / inseridos / ignorados / falhas | 19 / 18 / 1 / 0 |
+| — Tempo de execução | 0.6s a 3.89s nas evidências versionadas |
 | **Ferramentas de IA utilizadas** | |
 | — Quais ferramentas | OpenCode (`deepseek-v4-pro` e `GPT-5.5 xhigh`) |
 | — Sessão GPT-5.5 xhigh | [opncd.ai/share/1uiGSnkj](https://opncd.ai/share/1uiGSnkj) |
-| — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação, módulo HN completo |
-| **Limitações conhecidas** | Parte 1: nenhuma. Parte 2: carga full sem --limit leva horas (~49M itens) com rate limit de 100ms. |
+| — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação, módulo HN, frontend, Docker/deploy e documentação |
+| **Limitações conhecidas** | Parte 1: nenhuma crítica. Parte 2: carga full sem `limit` leva horas (~49M itens) com rate limit de 100ms. Deploy gratuito pode hibernar e ter filesystem efêmero. |
 | **Melhorias futuras** | Endpoint updates.json; paralelismo controlado; WebSocket para progresso; retry automático de IDs com falha |

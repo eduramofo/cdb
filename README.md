@@ -22,9 +22,13 @@ API de automação construída com **FastAPI + Playwright + SQLite** para resolv
 | **uv** | Gerenciador de pacotes e ambientes Python, rápido e reprodutível |
 | **FastAPI** | API REST moderna, async nativo, Swagger automático |
 | **Playwright** | Automação web com seletores por label/texto, auto-waits, headless/headed toggle |
-| **httpx** | Cliente HTTP async para download da planilha |
+| **httpx** | Cliente HTTP async para download da planilha e consumo da HN API |
 | **openpyxl** | Leitura de `.xlsx` sem depender do Excel instalado |
 | **SQLite** | Persistência local zero-config, ideal para o escopo do teste |
+| **Uvicorn** | Servidor ASGI para execução da API FastAPI |
+| **Pydantic** | Modelagem e serialização dos dados da API e relatórios |
+| **HTML/CSS/JS vanilla** | Mini-frontend de apresentação servido pela própria API |
+| **Docker / Docker Compose** | Empacotamento para deploy e execução local reproduzível |
 
 ---
 
@@ -44,13 +48,27 @@ uv sync
 uv run playwright install chromium
 ```
 
+> Em Linux ou container, use `uv run playwright install --with-deps chromium` para instalar também as dependências do Chromium.
+
 ### Iniciar API
 
 ```bash
 uv run cdb
 ```
 
-Acesse **http://localhost:8000** — redireciona para o Swagger UI.
+Acesse:
+
+- **Dashboard:** [http://localhost:8000](http://localhost:8000)
+- **Swagger/OpenAPI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Healthcheck:** [http://localhost:8000/health](http://localhost:8000/health)
+
+### Executar com Docker Compose
+
+```bash
+docker compose up --build
+```
+
+O `docker-compose.yml` sobe o mesmo app em `http://localhost:8000`, com volume persistente para `/app/artifacts`. Em deploys como Render/Koyeb, o artefato principal é o `Dockerfile`; o Compose é voltado para execução local ou VPS.
 
 ### Executar Testes
 
@@ -83,7 +101,12 @@ src/cdb/
 
 tests/
 ├── test_rpa.py          # 16 testes (pytest): parse, mapeamento, seletor, retry
-└── test_hn.py           # 21 testes (pytest): idempotência, UPSERT, retry, watermark
+└── test_hn.py           # 28 testes (pytest): idempotência, UPSERT, retry, watermark
+
+static/
+├── index.html           # mini-frontend SPA servido em /
+├── css/dashboard.css    # estilos do dashboard
+└── js/                  # telas: dashboard, RPA, HN, artifacts e docs
 
 docs/
 ├── TESTE.md                   # especificação original com progresso
@@ -94,15 +117,35 @@ docs/
 │   └── AVALIACAO.md           # avaliação de conformidade final
 └── PARTE_2/
     ├── README.md              # checklist HN API
-    ├── TESTES_AUTOMATIZADOS.md # comprovação 21/21 testes
+    ├── TESTES_AUTOMATIZADOS.md # comprovação 28/28 testes
     └── AVALIACAO.md           # avaliação de conformidade final
 
 artifacts/
-├── rpa_result_*.png    # screenshots das execuções
-├── rpa_result_*.json   # resultados estruturados
-├── hn_report_*.json    # relatórios de carga HN
-└── hn_report_*.txt     # sumário textual
+├── proof_files/        # evidências versionadas para avaliação
+├── rpa_result_*.png    # screenshots gerados em runtime
+├── rpa_result_*.json   # resultados estruturados gerados em runtime
+├── hn_report_*.json    # relatórios HN gerados em runtime
+└── hn_report_*.txt     # sumário textual gerado em runtime
+
+Dockerfile              # imagem de produção para Render/Koyeb/etc.
+docker-compose.yml      # execução local/VPS com volume para artifacts
 ```
+
+---
+
+## Frontend de Apresentação
+
+O teste técnico não exigia frontend. Ainda assim, foi criado um mini-dashboard em **HTML/CSS/JS vanilla** para deixar a entrega mais apresentável para o recrutador e facilitar a demonstração dos fluxos sem depender apenas de `curl` ou Swagger.
+
+O dashboard inclui:
+
+- Visão geral de health, registros RPA, itens HN e testes.
+- Tela RPA para download da planilha, execução do desafio e reset da base.
+- Tela Hacker News para carga incremental, status e listagem paginada.
+- Tela Artifacts com preview de PNG, JSON e TXT, incluindo `artifacts/proof_files/`.
+- Tela Documentação com renderização dos arquivos Markdown do projeto.
+
+Essa camada é apenas uma interface de apresentação. A API continua sendo o núcleo da solução e todos os fluxos principais também estão disponíveis via endpoints REST.
 
 ---
 
@@ -145,6 +188,15 @@ curl http://localhost:8000/api/v1/rpa/records
 | `GET` | `/api/v1/hn/items?limit=100&offset=0` | Lista itens persistidos |
 | `GET` | `/api/v1/hn/status` | Watermark, total e distribuição por tipo |
 
+### Endpoints Auxiliares do Dashboard
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/api/v1/artifacts` | Lista evidências geradas e arquivos de `artifacts/proof_files/` |
+| `GET` | `/api/v1/docs` | Lista a árvore de documentação exibida no frontend |
+| `GET` | `/artifacts/...` | Serve arquivos de evidência para preview |
+| `GET` | `/docs-files/...` | Serve arquivos da documentação |
+
 ### Fluxo HN
 
 ```bash
@@ -169,9 +221,9 @@ curl "http://localhost:8000/api/v1/hn/items?limit=10"
 Status:            success
 Acurácia:          100% (70/70 campos)
 Registros:         10 processados
-Tempo:             ~5 segundos (headless)
+Tempo:             ~6 segundos (headless, evidências entre 5.65s e 6.59s)
 Testes:            16/16 passando (uv run pytest)
-Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
+Evidências:        artifacts/proof_files/rpa_result_*.png + *.json
 ```
 
 > Documentação completa: [docs/PARTE_1/](docs/PARTE_1/) — checklist, testes, avaliação.
@@ -181,13 +233,14 @@ Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
 ## Resultados Obtidos — Parte 2 (Hacker News)
 
 ```
-Carga inicial:     5 itens (teste ao vivo da API HN)
-Idempotência:      ✅ Confirmada (2a execução: 0 duplicados)
+Carga inicial:     Configurável via ?limit=N
+Evidências:        3 execuções versionadas (19 consultados, 18 inseridos, 1 ignorado, 0 falhas)
+Idempotência:      ✅ Confirmada por UPSERT + watermark incremental
 Persistência:      SQLite (hn_items + watermark)
 Resiliência:       Retry 3x c/ backoff (1s→2s→4s), timeout 30s, rate limit 100ms
 Testes:            28/28 passando (uv run pytest)
 Total:             44/44 passando (16 RPA + 28 HN)
-Evidências:        artifacts/hn_report_*.json + artifacts/hn_report_*.txt
+Evidências:        artifacts/proof_files/hn_report_*.json + *.txt
 ```
 
 > Documentação completa: [docs/PARTE_2/](docs/PARTE_2/) — checklist, testes, avaliação.
@@ -215,6 +268,10 @@ Se nenhum dos dois encontrar o campo, o erro é tratado com retry (3 tentativas)
 
 FastAPI oferece Swagger auto-gerado, o que demonstra profissionalismo na apresentação ao recrutador. A API também expõe o pipeline de forma modular: download, run, reset — cada etapa acionável separadamente.
 
+### Por que incluir um frontend se não foi solicitado?
+
+O frontend foi adicionado como camada opcional de apresentação. Ele não substitui a API nem altera os requisitos técnicos, mas deixa o projeto mais fácil de avaliar em uma URL pública: o recrutador consegue acionar fluxos, visualizar artifacts, abrir documentação e conferir o estado da aplicação sem preparar comandos manualmente.
+
 ### Por que SQLite para ambas as partes?
 
 Zero-config, single-file, transacional. Suficiente para o volume do teste. O banco da Parte 1 (`challenge.db`) e o da Parte 2 (`hn_data.db`) são independentes, mantendo isolamento claro entre as duas soluções. Para volume real da HN (~49M itens), migrar para PostgreSQL com índices compostos.
@@ -232,7 +289,28 @@ Se o watermark só avançasse após processamento contíguo (sem gaps), um únic
 ## Limitações Conhecidas
 
 - **Parte 1**: Nenhuma limitação crítica. O seletor tem fallback automático (`ng-reflect-dictionary-value`), retry com backoff (3 tentativas, 1s/2s/3s), screenshot por erro e 16 testes automatizados.
-- **Parte 2**: Nenhuma limitação crítica. O loader usa batch commits (50 itens), upsert por `ON CONFLICT`, watermark atualizado a cada batch. A execução em modo full (sem `--limit`) pode levar horas dado o volume de ~49M de itens na HN, mas é funcional.
+- **Parte 2**: Nenhuma limitação crítica. O loader usa batch commits (50 itens), upsert por `ON CONFLICT`, watermark atualizado a cada batch. A execução em modo full (sem `limit`) pode levar horas dado o volume de ~49M de itens na HN, mas é funcional.
+- **Deploy público gratuito**: o ambiente Render pode hibernar e o filesystem de runtime é efêmero. As evidências versionadas em `artifacts/proof_files/` são copiadas para a imagem Docker; novos artifacts gerados em runtime podem se perder em novo deploy/restart.
+
+---
+
+## Deploy
+
+O projeto está publicado para visualização em: [https://cdb-ff94.onrender.com/](https://cdb-ff94.onrender.com/).
+
+O deploy público usa o `Dockerfile`, que instala dependências com `uv`, baixa o Chromium do Playwright e inicia a aplicação com `uvicorn` sem `reload`:
+
+```bash
+uvicorn cdb.main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+
+Para rodar localmente com container:
+
+```bash
+docker compose up --build
+```
+
+O `docker-compose.yml` mantém `artifacts/` em um volume Docker nomeado. No Render/Koyeb, configure a porta interna `8000` e healthcheck em `/health`.
 
 ---
 
@@ -253,7 +331,7 @@ Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent 
 
 **Sessão OpenCode — Mini-Frontend Dashboard:** [opncd.ai/share/ztv77gHu](https://opncd.ai/share/ztv77gHu)
 
-**Sessão OpenCode — Deploy Docker/Koyeb e documentação (GPT-5.5 xhigh):** [opncd.ai/share/1uiGSnkj](https://opncd.ai/share/1uiGSnkj)
+**Sessão OpenCode — Deploy Docker/Render e documentação (GPT-5.5 xhigh):** [opncd.ai/share/1uiGSnkj](https://opncd.ai/share/1uiGSnkj)
 
 > O Mini-Frontend (SPA vanilla HTML/CSS/JS) foi desenvolvido em sessão adicional com OpenCode (deepseek-v4-pro): dashboard com 5 seções, renderizador markdown, auto-load HN, modais, toasts e melhorias de UX.
 
@@ -264,11 +342,19 @@ Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent 
 | Marco | Data |
 |-------|------|
 | Início do projeto | 29/07/2026 11:52 |
-| Conclusão da Etapa 1 | 29/07/2026 13:28 |
-| Início da Etapa 2 | 29/07/2026 13:59 |
-| Conclusão da Etapa 2 | 29/07/2026 14:06 |
+| Especificação e checklist adicionados | 29/07/2026 12:13 |
+| Base FastAPI + download/parse RPA + SQLite | 29/07/2026 12:22 |
+| Automação RPA 100% com Playwright | 29/07/2026 12:51 |
+| Testes e documentação da Parte 1 concluídos | 29/07/2026 13:28 |
+| Implementação da Parte 2 — HN API incremental | 29/07/2026 14:29 |
+| Mini-frontend dashboard | 29/07/2026 15:01 |
+| Melhorias frontend, documentação e testes finais | 29/07/2026 15:32 |
+| Artifacts de prova adicionados | 29/07/2026 15:40 |
+| Setup Docker/deploy | 29/07/2026 15:55 |
+| URL pública e uso de IA atualizados | 29/07/2026 16:01 |
+| Revisão final de consistência | 29/07/2026 16:16 |
 
-> **Nota:** O intervalo entre a conclusão da Etapa 1 (13:28) e o início da Etapa 2 (13:59) foi uma pausa entre as etapas.
+> **Nota:** os horários foram extraídos do histórico Git (`git log`) e representam os principais marcos versionados do projeto.
 
 ---
 

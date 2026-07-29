@@ -23,6 +23,7 @@ RUN uv sync --locked --no-dev --no-install-project \
 COPY src ./src
 COPY static ./static
 COPY docs ./docs
+COPY artifacts/proof_files ./artifacts/proof_files
 
 RUN uv sync --locked --no-dev \
     && groupadd --system app \

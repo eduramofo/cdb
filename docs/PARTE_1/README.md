@@ -50,7 +50,7 @@
 ### Validação e Testes
 - [x] Teste de mapeamento de colunas (planilha → campos do formulário) → 3 testes em `TestFieldMapping`
 - [x] Teste de parse da planilha Excel → 5 testes em `TestParseSpreadsheet`
-- [x] Teste de resiliência dos seletores (mock ou stub do DOM) → 3 testes em `TestSelectorResilience`
+- [x] Teste de resiliência dos seletores (mock ou stub do DOM) → 5 testes em `TestSelectorResilience`
 - [x] Verificar que não há preenchimento manual, edição do DOM nem gravação frágil de passos → automação usa `fill()` nativo do Playwright
 
 ### Resultado da Execução Real
@@ -59,9 +59,9 @@
 Status:            success
 Acurácia:          100% (70/70 campos)
 Registros:         10 processados
-Tempo:             ~5 segundos (headless)
+Tempo:             ~6 segundos (headless, evidências entre 5.65s e 6.59s)
 Mensagem:          "Your success rate is 100% (70 out of 70 fields)"
-Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
+Evidências:        artifacts/proof_files/rpa_result_*.png + artifacts/proof_files/rpa_result_*.json
 ```
 
 ---

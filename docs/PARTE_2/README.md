@@ -42,16 +42,16 @@
 - [x] Implementar escrita do watermark após processamento bem-sucedido
 - [x] Definir estratégia de atualização do watermark:
   - [x] Atualizar após cada batch (50 itens), com registro de IDs com falha para relatório
-- [x] Na primeira execução (sem watermark), permitir carga inicial com `--limit N`
+- [x] Na primeira execução (sem watermark), permitir carga inicial com query param `?limit=N`
 
 ### Consumo da API
 - [x] Obter `maxitem.json` para descobrir o maior ID disponível
-- [x] Calcular intervalo a processar: `[last_processed_id + 1, maxitem]` ou limitado por `--limit`
+- [x] Calcular intervalo a processar: `[last_processed_id + 1, maxitem]` ou limitado por `?limit=N`
 - [x] Para cada ID no intervalo, fazer `GET /item/{id}.json`
 - [x] Implementar retry com backoff exponencial (3 tentativas, 1s/2s/4s)
 - [x] Tratar timeouts (timeout por request: 30s)
 - [x] Tratar itens nulos (API retorna `null` para IDs inexistentes)
-- [x] Tratar itens deletados (`deleted: true` → ignorados, não persiste)
+- [x] Tratar itens deletados (`deleted: true` → loader contabiliza como ignorado e não persiste)
 - [x] Tratar itens mortos (`dead: true` → persistidos com flag)
 - [x] Implementar rate limiting respeitoso (delay entre requests: 100ms)
 - [x] Registrar falhas por ID para relatório (não abortar toda a execução)
@@ -73,7 +73,7 @@
   - [x] Atualizados (já existentes, com dados novos)
   - [x] Ignorados (nulos/deletados)
   - [x] Falhas (com lista de IDs que falharam após retries)
-- [x] Salvar relatório em `artifacts/` como JSON e sumário em texto
+- [x] Salvar relatório em `artifacts/` como JSON e sumário em texto; evidências versionadas em `artifacts/proof_files/`
 - [x] Exibir sumário no stdout ao final da execução
 
 ### CLI e Interface
@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS watermark (
 - **Retry**: 3 tentativas com backoff exponencial (1s → 2s → 4s)
 - **Timeout**: 30s por request HTTP
 - **Itens nulos**: Registrados como "ignorados" no relatório
+- **Itens deletados**: O loader ignora em execução real; a camada de UPSERT aceita `deleted=1` e é coberta por teste unitário para manter compatibilidade com o schema da API.
 - **Rate limit**: 100ms entre requests para respeitar a API pública
 
 ### Testes Implementados

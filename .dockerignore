@@ -23,7 +23,6 @@ artifacts/*.sqlite-*
 artifacts/*.png
 artifacts/*.json
 artifacts/*.txt
-artifacts/proof_files/
 
 downloads/
 logs/

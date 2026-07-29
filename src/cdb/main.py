@@ -1,4 +1,3 @@
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator, Optional
@@ -214,21 +213,24 @@ async def hn_status():
 @app.get(
     "/api/v1/artifacts",
     summary="📁 Listar Artifacts",
-    description="Lista os arquivos de artifacts (JSON, PNG, TXT) com metadados.",
+    description="Lista recursivamente os arquivos de artifacts (JSON, PNG, TXT), incluindo proof_files, com metadados.",
     tags=["Artifacts"],
 )
 async def list_artifacts():
     entries = []
     if ARTIFACTS_DIR.exists():
-        for f in sorted(ARTIFACTS_DIR.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+        files = [f for f in ARTIFACTS_DIR.rglob("*") if f.is_file()]
+        for f in sorted(files, key=lambda x: x.stat().st_mtime, reverse=True):
             if f.is_file() and f.suffix.lower() in (".json", ".png", ".txt"):
                 stat = f.stat()
+                relative_path = f.relative_to(ARTIFACTS_DIR).as_posix()
                 entries.append({
                     "name": f.name,
-                    "path": f"artifacts/{f.name}",
+                    "relative_path": relative_path,
+                    "path": f"artifacts/{relative_path}",
                     "size": stat.st_size,
                     "size_human": _human_size(stat.st_size),
-                    "modified": os.path.getmtime(str(f)),
+                    "modified": stat.st_mtime,
                     "extension": f.suffix.lower(),
                 })
     return {"total": len(entries), "files": entries}
