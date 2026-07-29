@@ -23,20 +23,24 @@ A especificação é propositalmente objetiva. Espera-se que um candidato sênio
 
 ## 2. Entregáveis Obrigatórios
 
-- [ ] **README** — Instalação, execução, decisões técnicas, limitações e uso de IA (se houver)
-- [ ] **Código Python** organizado para os dois desafios (Parte 1 e Parte 2)
-- [ ] **Arquivo de dependências** ou configuração de ambiente (`requirements.txt`, `pyproject.toml`, `Pipfile`, etc.)
+- [x] **README** — Instalação, execução, decisões técnicas, limitações e uso de IA (se houver)
+- [ ] **Código Python** organizado para os dois desafios (Parte 1 ✅ e Parte 2 🔜)
+- [x] **Arquivo de dependências** ou configuração de ambiente (`pyproject.toml` com uv)
 - [ ] **Testes automatizados** relevantes (principalmente para API, idempotência e mapeamentos críticos)
-- [ ] **Evidências de execução** do RPA e da carga incremental (screenshots, JSON, logs em `artifacts/`)
-- [ ] **Não enviar:** credenciais, tokens, cookies, arquivos grandes desnecessários ou informações sensíveis
+- [x] **Evidências de execução** do RPA (screenshots, JSON em `artifacts/`) — Parte 1 ✅
+- [x] **Não enviar:** credenciais, tokens, cookies, arquivos grandes desnecessários ou informações sensíveis
 
 ---
 
-## 3. Parte 1 — Automação RPA com Python (Peso: 40%)
+## 3. Parte 1 — Automação RPA com Python (Peso: 40%) ✅ CONCLUÍDA
 
 ### Descrição
 
 Criar uma automação que acesse [https://rpachallenge.com/](https://rpachallenge.com/), obtenha a planilha do desafio e preencha todos os registros do formulário dinâmico com **100% de acurácia**, sem intervenção manual.
+
+**Resultado:** 100% (70/70 campos), ~5 segundos, Playwright + Chromium headless.
+
+> Checklist detalhado: [TESTE_PARTE_1.md](./TESTE_PARTE_1.md)
 
 ### Expectativas Técnicas
 
@@ -98,11 +102,13 @@ Criar uma automação que acesse [https://rpachallenge.com/](https://rpachalleng
 
 ---
 
-## 4. Parte 2 — Carga Incremental com API Hacker News (Peso: 40%)
+## 4. Parte 2 — Carga Incremental com API Hacker News (Peso: 40%) 🔜 PENDENTE
 
 ### Descrição
 
 Implementar um processo incremental que consuma a API oficial do Hacker News, persista itens em base local e permita execuções repetidas sem duplicidade.
+
+> Checklist detalhado: [TESTE_PARTE_2.md](./TESTE_PARTE_2.md)
 
 **Base URL:** `https://hacker-news.firebaseio.com/v0/`
 
@@ -232,17 +238,17 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 ## 6. Checklist Final de Entrega (Geral)
 
 ### Antes de Enviar
-- [ ] `README.md` completo com instalação, execução, decisões técnicas, limitações
-- [ ] `requirements.txt` (ou equivalente) funcional em máquina limpa
-- [ ] Código Python organizado (módulos separados para RPA e API)
+- [x] `README.md` completo com instalação, execução, decisões técnicas, limitações
+- [x] `pyproject.toml` funcional em máquina limpa (uv)
+- [x] Código Python organizado (módulos separados para RPA ✅ e HN 🔜)
 - [ ] Testes passando (pytest ou unittest): `pytest` ou comando documentado
-- [ ] Evidências em `artifacts/`:
-  - [ ] Screenshot/JSON do resultado do RPA Challenge
+- [x] Evidências em `artifacts/`:
+  - [x] Screenshot/JSON do resultado do RPA Challenge
   - [ ] Relatório JSON da carga incremental
-- [ ] `.gitignore` configurado (excluir `__pycache__`, `.env`, `*.db`, `artifacts/*` exceto evidências)
-- [ ] Nenhum arquivo sensível (credenciais, tokens, cookies)
-- [ ] Código sem comentários de TODO soltos (a menos que intencionais e explicados)
-- [ ] Review final de cada arquivo (lint, formatação consistente)
+- [x] `.gitignore` configurado (excluir `__pycache__`, `.env`, `*.db`, `artifacts/*` exceto evidências)
+- [x] Nenhum arquivo sensível (credenciais, tokens, cookies)
+- [x] Código sem comentários de TODO soltos
+- [x] Review final de cada arquivo (lint, formatação consistente)
 
 ### Durante a Apresentação
 - [ ] Demonstrar execução do RPA (ao vivo ou evidência gravada)
@@ -257,12 +263,11 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 
 > **Nota para o candidato:** Leia atentamente caso utilize ferramentas de IA (ChatGPT, Copilot, Claude, etc.) durante o teste.
 
-- [ ] **Declarar no README** se e como utilizou IA generativa no desenvolvimento
-- [ ] Descrever quais partes foram auxiliadas por IA e quais foram feitas manualmente
-- [ ] Validar criticamente todo código gerado por IA (funcionamento, segurança, idioma Python)
-- [ ] IA pode acelerar, mas a defesa técnica e as decisões de arquitetura devem partir do candidato
-- [ ] O avaliador julgará a qualidade do resultado final, não a ferramenta usada
-- [ ] Entregar código que você entende completamente e consegue explicar linha a linha
+- [x] **Declarar no README** → OpenCode (deepseek-v4-pro) usado como assistente
+- [x] Descrever quais partes foram auxiliadas por IA e quais foram feitas manualmente → boilerplate + debug de seletores
+- [x] Validar criticamente todo código gerado por IA → testado com execução real
+- [x] Decisões de arquitetura tomadas pelo candidato → Playwright vs Selenium, seletor CSS, estrutura modular
+- [x] Código compreendido e explicável linha a linha
 
 ---
 
@@ -272,21 +277,21 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 
 | Campo | Valor |
 |-------|-------|
-| **Data e hora de início** | |
-| **Data e hora de entrega** | |
-| **Tempo total gasto (aproximado)** | |
-| **Parte 1 — RPA Challenge** | |
-| — Biblioteca utilizada | |
-| — Acurácia obtida | |
-| — Tempo de execução | |
-| — Executou headless? | |
-| **Parte 2 — Carga Incremental HN** | |
-| — Banco utilizado | |
-| — Itens processados (carga inicial) | |
-| — Itens processados (incremento) | |
-| — Total inseridos / atualizados / falhas | |
+| **Data e hora de início** | 2026-07-29 12:00 |
+| **Data e hora de entrega** | Em andamento |
+| **Tempo total gasto (aproximado)** | ~3h |
+| **Parte 1 — RPA Challenge** | ✅ |
+| — Biblioteca utilizada | Playwright 1.61.0 |
+| — Acurácia obtida | 100% (70/70 campos) |
+| — Tempo de execução | ~5 segundos (headless) |
+| — Executou headless? | Sim (padrão); headed via `?headed=true` |
+| **Parte 2 — Carga Incremental HN** | 🔜 |
+| — Banco utilizado | SQLite (proposto) |
+| — Itens processados (carga inicial) | — |
+| — Itens processados (incremento) | — |
+| — Total inseridos / atualizados / falhas | — |
 | **Ferramentas de IA utilizadas** | |
-| — Quais ferramentas | |
-| — Quais partes do código | |
-| **Limitações conhecidas** | |
-| **Melhorias futuras** | |
+| — Quais ferramentas | OpenCode (deepseek-v4-pro) |
+| — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação de arquivos |
+| **Limitações conhecidas** | Sem retry por campo individual, sem testes automatizados, sem Parte 2 |
+| **Melhorias futuras** | Adicionar pytest, retry com backoff, fallback de seletores, implementar Parte 2 |
