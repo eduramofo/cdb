@@ -150,94 +150,113 @@ const AppDocs = {
     },
 
     renderMarkdown(md) {
-        let html = md;
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-            return `<pre><code>${App.esc(code.trimEnd())}</code></pre>`;
-        });
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-        html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-        html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-        html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-        html = html.replace(/^---$/gm, '<hr>');
+        const lines = md.split('\n');
+        const out = [];
+        const para = [];
+        let i = 0;
 
-        const lines = html.split('\n');
-        let result = '';
-        let inCodeBlock = false;
-        let inList = false;
-        let inTable = false;
-        let paragraph = [];
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.startsWith('<pre>')) {
-                if (paragraph.length) { result += '<p>' + paragraph.join(' ') + '</p>\n'; paragraph = []; }
-                inCodeBlock = true;
-                result += line + '\n';
-                continue;
-            }
-            if (line.startsWith('</pre>')) {
-                inCodeBlock = false;
-                result += line + '\n';
-                continue;
-            }
-            if (inCodeBlock) { result += line + '\n'; continue; }
-
-            if (line.trim() === '') {
-                if (paragraph.length) { result += '<p>' + paragraph.join(' ') + '</p>\n'; paragraph = []; }
-                if (inList) { result += '</ul>\n'; inList = false; }
-                continue;
-            }
-
-            if (/^<h[1-4]>/.test(line) || /^<hr/.test(line) || /^<blockquote>/.test(line) || line.startsWith('|')) {
-                if (paragraph.length) { result += '<p>' + paragraph.join(' ') + '</p>\n'; paragraph = []; }
-                if (inList) { result += '</ul>\n'; inList = false; }
-
-                if (line.startsWith('|')) {
-                    if (!inTable) { inTable = true; }
-                    if (line.includes('---')) { result += ''; continue; }
-                    const cells = line.split('|').filter(c => c.trim()).map(c => {
-                        const next = lines[i + 1];
-                        const tag = next && next.includes('---') ? 'th' : 'td';
-                        return `<${tag}>${c.trim()}</${tag}>`;
-                    });
-                    if (inTable && !lines[i - 1]?.includes('---')) {
-                        result += `<tr>${cells.join('')}</tr>\n`;
-                    }
-                    continue;
-                } else {
-                    if (inTable) { inTable = false; }
-                }
-
-                result += line + '\n';
-                continue;
-            }
-
-            if (/^[\s]*[-*+] (.+)/.test(line)) {
-                if (!inList) { result += '<ul>\n'; inList = true; }
-                result += '<li>' + line.replace(/^[\s]*[-*+] /, '') + '</li>\n';
-                continue;
-            }
-
-            if (inList) { result += '</ul>\n'; inList = false; }
-
-            paragraph.push(line);
+        function flush() {
+            if (!para.length) return;
+            out.push('<p>' + para.join(' ') + '</p>');
+            para.length = 0;
         }
 
-        if (paragraph.length) { result += '<p>' + paragraph.join(' ') + '</p>\n'; }
-        if (inList) { result += '</ul>\n'; }
+        function parseInline(text) {
+            let t = App.esc(text);
+            t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+            t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+            t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            t = t.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            return t;
+        }
 
-        result = result.replace(/(<tr>[\s\S]*?<\/tr>)/g, (match) => {
-            if (match.startsWith('<table>')) return match;
-            return '<table>' + match + '</table>';
-        });
+        while (i < lines.length) {
+            const line = lines[i];
 
-        return result.trim();
+            if (/^```/.test(line)) {
+                flush();
+                let code = '';
+                i++;
+                while (i < lines.length && !/^```/.test(lines[i])) {
+                    code += (code ? '\n' : '') + lines[i];
+                    i++;
+                }
+                i++;
+                out.push('<pre><code>' + App.esc(code) + '</code></pre>');
+                continue;
+            }
+
+            if (/^#{1,4} /.test(line)) {
+                flush();
+                const m = line.match(/^(#{1,4}) (.+)$/);
+                const level = m[1].length;
+                out.push(`<h${level}>${parseInline(m[2])}</h${level}>`);
+                i++;
+                continue;
+            }
+
+            if (/^> /.test(line)) {
+                flush();
+                out.push('<blockquote>' + parseInline(line.replace(/^> /, '')) + '</blockquote>');
+                i++;
+                continue;
+            }
+
+            if (/^---\s*$/.test(line)) {
+                flush();
+                out.push('<hr>');
+                i++;
+                continue;
+            }
+
+            if (/^[\s]*[-*+] /.test(line)) {
+                flush();
+                out.push('<ul>');
+                while (i < lines.length && /^[\s]*[-*+] /.test(lines[i])) {
+                    out.push('<li>' + parseInline(lines[i].replace(/^[\s]*[-*+] /, '')) + '</li>');
+                    i++;
+                }
+                out.push('</ul>');
+                continue;
+            }
+
+            if (/^\d+\. /.test(line)) {
+                flush();
+                out.push('<ol>');
+                while (i < lines.length && /^\d+\. /.test(lines[i])) {
+                    out.push('<li>' + parseInline(lines[i].replace(/^\d+\. /, '')) + '</li>');
+                    i++;
+                }
+                out.push('</ol>');
+                continue;
+            }
+
+            if (line.startsWith('|') && line.endsWith('|') && i + 1 < lines.length && /^\|[\s\-:|]+\|$/.test(lines[i + 1])) {
+                flush();
+                const headers = line.split('|').filter(c => c.trim()).map(c => '<th>' + parseInline(c.trim()) + '</th>');
+                out.push('<table><thead><tr>' + headers.join('') + '</tr></thead><tbody>');
+                i += 2;
+                while (i < lines.length && lines[i].startsWith('|')) {
+                    const cells = lines[i].split('|').filter(c => c.trim()).map(c => '<td>' + parseInline(c.trim()) + '</td>');
+                    out.push('<tr>' + cells.join('') + '</tr>');
+                    i++;
+                }
+                out.push('</tbody></table>');
+                continue;
+            }
+
+            if (line.trim() === '') {
+                flush();
+                i++;
+                continue;
+            }
+
+            para.push(parseInline(line));
+            i++;
+        }
+
+        flush();
+        return out.join('\n');
     },
 };
