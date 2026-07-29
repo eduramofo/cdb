@@ -1,18 +1,30 @@
+import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from pathlib import Path
+from typing import AsyncGenerator, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from cdb.db.database import (
     clear_records,
     get_all_records,
+    get_hn_item_count,
+    get_hn_items,
+    get_hn_items_by_type,
     get_record_count,
+    get_watermark,
     init_db,
     insert_records,
 )
 from cdb.rpa.downloader import download_spreadsheet, parse_spreadsheet
 from cdb.rpa.filler import run_challenge
+from cdb.hn.loader import run_load
+
+STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
+DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
+ARTIFACTS_DIR = Path(__file__).resolve().parent.parent.parent / "artifacts"
 
 
 @asynccontextmanager
@@ -29,7 +41,7 @@ API de automação para o teste técnico prático de **Desenvolvedor Sênior de 
 ## Funcionalidades
 
 - **RPA Challenge**: Download, parse e armazenamento da planilha oficial do [RPA Challenge](https://rpachallenge.com)
-- **Carga Incremental Hacker News**: (em breve) Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental
+- **Carga Incremental Hacker News**: Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental
 
 ## Execução
 
@@ -43,10 +55,19 @@ uv run cdb
     redoc_url="/redoc",
 )
 
+if STATIC_DIR.exists():
+    app.mount("/app", StaticFiles(directory=str(STATIC_DIR), html=True), name="app")
+
+if DOCS_DIR.exists():
+    app.mount("/docs-files", StaticFiles(directory=str(DOCS_DIR), html=True), name="docs-files")
+
+if ARTIFACTS_DIR.exists():
+    app.mount("/artifacts", StaticFiles(directory=str(ARTIFACTS_DIR), html=True), name="artifacts")
+
 
 @app.get("/", include_in_schema=False)
 async def root():
-    return RedirectResponse(url="/docs")
+    return RedirectResponse(url="/app")
 
 
 @app.get("/health", tags=["Health"])
@@ -137,3 +158,90 @@ e preenche o formulário dinâmico com os registros persistidos no banco.
 async def rpa_run(headed: bool = False):
     result = await run_challenge(headed=headed)
     return result
+
+
+# ── Hacker News ─────────────────────────────────────────────────────────
+
+
+@app.post(
+    "/api/v1/hn/load",
+    summary="📰 Carga Incremental Hacker News",
+    description="""
+Dispara o processo de carga incremental da [Hacker News API](https://github.com/HackerNews/API).
+
+Na primeira execução, carrega os últimos N itens (definido por `limit`).
+Nas execuções seguintes, carrega apenas os itens novos desde a última execução (watermark).
+
+**Parâmetros:**
+- `limit` (query param, opcional): número máximo de itens a carregar.
+""",
+    tags=["Hacker News"],
+)
+async def hn_load(limit: Optional[int] = Query(None, ge=1)):
+    report = await run_load(limit=limit)
+    return report.model_dump()
+
+
+@app.get(
+    "/api/v1/hn/items",
+    summary="📋 Listar Itens HN",
+    description="Retorna os itens persistidos do Hacker News, ordenados por ID decrescente.",
+    tags=["Hacker News"],
+)
+async def hn_items(limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0)):
+    items = get_hn_items(limit=limit, offset=offset)
+    return {
+        "total": get_hn_item_count(),
+        "limit": limit,
+        "offset": offset,
+        "items": items,
+    }
+
+
+@app.get(
+    "/api/v1/hn/status",
+    summary="📊 Status da Carga HN",
+    description="Retorna o status atual da carga: watermark, total de itens e distribuição por tipo.",
+    tags=["Hacker News"],
+)
+async def hn_status():
+    last_processed = get_watermark("last_processed_id")
+    return {
+        "last_processed_id": int(last_processed) if last_processed else None,
+        "total_items": get_hn_item_count(),
+        "items_by_type": get_hn_items_by_type(),
+    }
+
+
+# ── Artifacts ───────────────────────────────────────────────────────────
+
+
+@app.get(
+    "/api/v1/artifacts",
+    summary="📁 Listar Artifacts",
+    description="Lista os arquivos de artifacts (JSON, PNG, TXT) com metadados.",
+    tags=["Artifacts"],
+)
+async def list_artifacts():
+    entries = []
+    if ARTIFACTS_DIR.exists():
+        for f in sorted(ARTIFACTS_DIR.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+            if f.is_file():
+                stat = f.stat()
+                entries.append({
+                    "name": f.name,
+                    "path": f"artifacts/{f.name}",
+                    "size": stat.st_size,
+                    "size_human": _human_size(stat.st_size),
+                    "modified": os.path.getmtime(str(f)),
+                    "extension": f.suffix.lower(),
+                })
+    return {"total": len(entries), "files": entries}
+
+
+def _human_size(size: int) -> str:
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024:
+            return f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} TB"

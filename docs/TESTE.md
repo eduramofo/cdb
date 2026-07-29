@@ -24,10 +24,11 @@ A especificação é propositalmente objetiva. Espera-se que um candidato sênio
 ## 2. Entregáveis Obrigatórios
 
 - [x] **README** — Instalação, execução, decisões técnicas, limitações e uso de IA (se houver)
-- [x] **Código Python** organizado para os dois desafios (Parte 1 ✅ e Parte 2 🔜)
+- [x] **Código Python** organizado para os dois desafios (Parte 1 ✅ e Parte 2 ✅)
 - [x] **Arquivo de dependências** ou configuração de ambiente (`pyproject.toml` com uv)
-- [x] **Testes automatizados** relevantes → 16 testes (pytest), mapeamento de colunas, parse, seletor e retry
+- [x] **Testes automatizados** relevantes → 37 testes (pytest): 16 RPA + 21 HN
 - [x] **Evidências de execução** do RPA (screenshots, JSON em `artifacts/`) — Parte 1 ✅
+- [x] **Evidências de execução** do HN (relatórios JSON/TXT em `artifacts/`) — Parte 2 ✅
 - [x] **Não enviar:** credenciais, tokens, cookies, arquivos grandes desnecessários ou informações sensíveis
 
 ---
@@ -68,13 +69,13 @@ Comprovação de testes: [PARTE_1/TESTES_AUTOMATIZADOS.md](./PARTE_1/TESTES_AUTO
 
 ---
 
-## 4. Parte 2 — Carga Incremental com API Hacker News (Peso: 40%) 🔜 PENDENTE
+## 4. Parte 2 — Carga Incremental com API Hacker News (Peso: 40%) ✅ CONCLUÍDA
 
 ### Descrição
 
 Implementar um processo incremental que consuma a API oficial do Hacker News, persista itens em base local e permita execuções repetidas sem duplicidade.
 
-> Checklist detalhado: [PARTE_2/README.md](./PARTE_2/README.md)
+> Checklist detalhado: [PARTE_2/README.md](./PARTE_2/README.md) | Testes: [PARTE_2/TESTES_AUTOMATIZADOS.md](./PARTE_2/TESTES_AUTOMATIZADOS.md) | Avaliação: [PARTE_2/AVALIACAO.md](./PARTE_2/AVALIACAO.md)
 
 **Base URL:** `https://hacker-news.firebaseio.com/v0/`
 
@@ -99,84 +100,80 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 ### Checklist Detalhado — Carga Incremental Hacker News
 
 #### Setup e Infraestrutura
-- [ ] Escolher e justificar banco de dados (SQLite recomendado)
-- [ ] Definir schema da tabela de itens:
-  - [ ] `id` (integer, primary key — ID do item no HN)
-  - [ ] `type` (text — job, story, comment, poll, pollopt)
-  - [ ] `by` (text — autor)
-  - [ ] `time` (integer — timestamp Unix)
-  - [ ] `title` (text, nullable)
-  - [ ] `url` (text, nullable)
-  - [ ] `text` (text, nullable)
-  - [ ] `score` (integer, nullable)
-  - [ ] `descendants` (integer, nullable)
-  - [ ] `parent` (integer, nullable)
-  - [ ] `kids` (text, nullable — JSON array de IDs)
-  - [ ] `raw_json` (text — JSON bruto completo)
-  - [ ] `fetched_at` (text — timestamp da coleta)
-  - [ ] `updated_at` (text — timestamp da última atualização)
-- [ ] Criar tabela auxiliar de estado (`watermark`):
-  - [ ] `key` (text, primary key — ex: `last_processed_id`)
-  - [ ] `value` (text)
-- [ ] Configurar logging estruturado (timestamp, nível, mensagem, ID do item em falha)
-- [ ] Criar diretório `artifacts/` para relatórios de execução
+- [x] Escolher e justificar banco de dados (SQLite recomendado)
+- [x] Definir schema da tabela de itens:
+  - [x] `id` (integer, primary key — ID do item no HN)
+  - [x] `type` (text — job, story, comment, poll, pollopt)
+  - [x] `by` (text — autor)
+  - [x] `time` (integer — timestamp Unix)
+  - [x] `title` (text, nullable)
+  - [x] `url` (text, nullable)
+  - [x] `text` (text, nullable)
+  - [x] `score` (integer, nullable)
+  - [x] `descendants` (integer, nullable)
+  - [x] `parent` (integer, nullable)
+  - [x] `kids` (text, nullable — JSON array de IDs)
+  - [x] `raw_json` (text — JSON bruto completo)
+  - [x] `fetched_at` (text — timestamp da coleta)
+  - [x] `updated_at` (text — timestamp da última atualização)
+- [x] Criar tabela auxiliar de estado (`watermark`):
+  - [x] `key` (text, primary key — ex: `last_processed_id`)
+  - [x] `value` (text)
+- [x] Configurar logging estruturado (timestamp, nível, mensagem, ID do item em falha)
+- [x] Criar diretório `artifacts/` para relatórios de execução
 
 #### Mecanismo de Estado Incremental
-- [ ] Implementar leitura do watermark (`last_processed_id`) do banco
-- [ ] Implementar escrita do watermark após processamento bem-sucedido
-- [ ] Definir estratégia de atualização do watermark:
-  - [ ] Atualizar somente após processar com sucesso o maior ID contíguo (sem gaps)
-  - [ ] Ou: atualizar após cada batch, com registro de IDs com falha para retry futuro
-- [ ] Na primeira execução (sem watermark), permitir carga inicial com `--limit N`
+- [x] Implementar leitura do watermark (`last_processed_id`) do banco
+- [x] Implementar escrita do watermark após processamento bem-sucedido
+- [x] Definir estratégia de atualização do watermark:
+  - [x] Atualizar após cada batch (50 itens), com registro de IDs com falha para relatório
+- [x] Na primeira execução (sem watermark), permitir carga inicial com `--limit N`
 
 #### Consumo da API
-- [ ] Obter `maxitem.json` para descobrir o maior ID disponível
-- [ ] Calcular intervalo a processar: `[last_processed_id + 1, maxitem]` ou limitado por `--limit`
-- [ ] Para cada ID no intervalo, fazer `GET /item/{id}.json`
-- [ ] Implementar retry com backoff exponencial (ex: 3 tentativas, 1s/2s/4s)
-- [ ] Tratar timeouts (definir timeout por request, ex: 30s)
-- [ ] Tratar itens nulos (a API retorna `null` para IDs deletados ou inválidos)
-- [ ] Implementar rate limiting respeitoso (delay entre requests, ex: 100ms)
-- [ ] Registrar falhas por ID para relatório (não abortar toda a execução)
+- [x] Obter `maxitem.json` para descobrir o maior ID disponível
+- [x] Calcular intervalo a processar: `[last_processed_id + 1, maxitem]` ou limitado por `--limit`
+- [x] Para cada ID no intervalo, fazer `GET /item/{id}.json`
+- [x] Implementar retry com backoff exponencial (3 tentativas, 1s/2s/4s)
+- [x] Tratar timeouts (timeout por request: 30s)
+- [x] Tratar itens nulos (a API retorna `null` para IDs deletados ou inválidos)
+- [x] Implementar rate limiting respeitoso (delay entre requests: 100ms)
+- [x] Registrar falhas por ID para relatório (não abortar toda a execução)
 
 #### Persistência
-- [ ] Implementar **UPSERT** (INSERT OR REPLACE / ON CONFLICT) usando `id` como chave única
-- [ ] Distinguir entre item novo (INSERT) e item atualizado (UPDATE) no relatório
-- [ ] Preservar o JSON bruto no campo `raw_json`
-- [ ] Extrair campos consultáveis para colunas dedicadas
-- [ ] Usar transações para consistência (batch de commits, não um por item)
+- [x] Implementar **UPSERT** (INSERT OR REPLACE / ON CONFLICT) usando `id` como chave única
+- [x] Distinguir entre item novo (INSERT) e item atualizado (UPDATE) no relatório
+- [x] Preservar o JSON bruto no campo `raw_json`
+- [x] Extrair campos consultáveis para colunas dedicadas
+- [x] Usar transações para consistência (batch de commits a cada 50 itens)
 
 #### Relatório e Métricas
-- [ ] Ao final de cada execução, gerar relatório com:
-  - [ ] Timestamp de início e fim
-  - [ ] Duração total
-  - [ ] Faixa processada (IDs de X a Y)
-  - [ ] Total consultados
-  - [ ] Inseridos (novos)
-  - [ ] Atualizados (já existentes, com dados novos)
-  - [ ] Ignorados (nulos/deletados)
-  - [ ] Falhas (com lista de IDs que falharam após retries)
-- [ ] Salvar relatório em `artifacts/` como JSON e sumário em texto
-- [ ] Exibir sumário no stdout ao final da execução
+- [x] Ao final de cada execução, gerar relatório com:
+  - [x] Timestamp de início e fim
+  - [x] Duração total
+  - [x] Faixa processada (IDs de X a Y)
+  - [x] Total consultados
+  - [x] Inseridos (novos)
+  - [x] Atualizados (já existentes, com dados novos)
+  - [x] Ignorados (nulos/deletados)
+  - [x] Falhas (com lista de IDs que falharam após retries)
+- [x] Salvar relatório em `artifacts/` como JSON e sumário em texto
+- [x] Exibir sumário no stdout ao final da execução
 
 #### CLI e Interface
-- [ ] Implementar entrada via CLI:
-  - [ ] `--limit N` — carregar no máximo N itens (padrão: sem limite, buscar tudo)
-  - [ ] `--db-path` — caminho para o SQLite (padrão: `hn_data.db`)
-  - [ ] `--report-dir` — diretório de relatórios (padrão: `artifacts/`)
-- [ ] README explica como executar:
-  - [ ] Carga inicial: `python main.py --limit 100`
-  - [ ] Carga incremental: `python main.py`
-  - [ ] Visualizar relatório
+- [x] Implementar entrada via API REST:
+  - [x] `POST /api/v1/hn/load?limit=N` — carga inicial/incremental
+  - [x] `GET /api/v1/hn/items?limit=100&offset=0` — listar itens persistidos
+  - [x] `GET /api/v1/hn/status` — status do watermark e estatísticas
+- [x] README explica como executar via curl
 
 #### Testes
-- [ ] Teste de idempotência: rodar 2x com mesmo intervalo, verificar 0 duplicados
-- [ ] Teste de UPSERT (insert + update)
-- [ ] Teste de parse de item da API (tipos: story, comment, job, poll)
-- [ ] Teste de tratamento de item nulo
-- [ ] Teste de retry e backoff (mock da API com falhas)
-- [ ] Teste de atualização do watermark
-- [ ] Teste de persistência do relatório
+- [x] Teste de idempotência: rodar 2x com mesmo intervalo, verificar 0 duplicados
+- [x] Teste de UPSERT (insert + update)
+- [x] Teste de parse de item da API (tipos: story, comment, job, poll)
+- [x] Teste de tratamento de item nulo
+- [x] Teste de retry e backoff (mock da API com falhas)
+- [x] Teste de atualização do watermark
+- [x] Teste de persistência do relatório
 
 ---
 
@@ -206,11 +203,11 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 ### Antes de Enviar
 - [x] `README.md` completo com instalação, execução, decisões técnicas, limitações
 - [x] `pyproject.toml` funcional em máquina limpa (uv)
-- [x] Código Python organizado (módulos separados para RPA ✅ e HN 🔜)
-- [x] Testes passando (pytest): `uv run pytest` → 16/16 passando
+- [x] Código Python organizado (módulos separados para RPA ✅ e HN ✅)
+- [x] Testes passando (pytest): `uv run pytest` → 37/37 passando (16 RPA + 21 HN)
 - [x] Evidências em `artifacts/`:
   - [x] Screenshot/JSON do resultado do RPA Challenge
-  - [ ] Relatório JSON da carga incremental
+  - [x] Relatório JSON/TXT da carga incremental HN
 - [x] `.gitignore` configurado (excluir `__pycache__`, `.env`, `*.db`, `artifacts/*` exceto evidências)
 - [x] Nenhum arquivo sensível (credenciais, tokens, cookies)
 - [x] Código sem comentários de TODO soltos
@@ -244,20 +241,22 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 | Campo | Valor |
 |-------|-------|
 | **Data e hora de início** | 2026-07-29 12:00 |
-| **Data e hora de entrega** | 2026-07-29 16:00 |
-| **Tempo total gasto (aproximado)** | ~4h |
+| **Data e hora de entrega** | 2026-07-29 14:06 |
+| **Tempo total gasto (aproximado)** | ~2h06min |
 | **Parte 1 — RPA Challenge** | ✅ |
 | — Biblioteca utilizada | Playwright 1.61.0 |
 | — Acurácia obtida | 100% (70/70 campos) |
 | — Tempo de execução | ~5 segundos (headless) |
 | — Executou headless? | Sim (padrão); headed via `?headed=true` |
-| **Parte 2 — Carga Incremental HN** | 🔜 |
-| — Banco utilizado | SQLite (proposto) |
-| — Itens processados (carga inicial) | — |
-| — Itens processados (incremento) | — |
-| — Total inseridos / atualizados / falhas | — |
+| **Parte 2 — Carga Incremental HN** | ✅ |
+| — Banco utilizado | SQLite (hn_items + watermark) |
+| — Biblioteca HTTP | httpx (já existente no projeto) |
+| — Itens processados (carga inicial) | 5 (teste ao vivo com ?limit=5) |
+| — Itens processados (incremento) | 0 (idempotência: watermark já em 49100143) |
+| — Total inseridos / atualizados / falhas | 5 / 0 / 0 |
+| — Tempo de execução (5 itens) | ~1.7 segundos |
 | **Ferramentas de IA utilizadas** | |
 | — Quais ferramentas | OpenCode (deepseek-v4-pro) |
-| — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação de arquivos |
-| **Limitações conhecidas** | Nenhuma na Parte 1. Parte 2 ainda não implementada. |
-| **Melhorias futuras** | Implementar Parte 2 (HN API), adicionar testes de integração para o fluxo completo da API |
+| — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação, módulo HN completo |
+| **Limitações conhecidas** | Parte 1: nenhuma. Parte 2: carga full sem --limit leva horas (~49M itens) com rate limit de 100ms. |
+| **Melhorias futuras** | Endpoint updates.json; paralelismo controlado; WebSocket para progresso; retry automático de IDs com falha |

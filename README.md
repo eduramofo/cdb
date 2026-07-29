@@ -7,9 +7,9 @@ API de automação construída com **FastAPI + Playwright + SQLite** para resolv
 | Parte | Status | Descrição |
 |-------|--------|-----------|
 | 1 — RPA Challenge | ✅ Concluída (100%) | Automação web no [rpachallenge.com](https://rpachallenge.com) |
-| 2 — Carga Incremental HN | 🔜 Pendente | Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental |
+| 2 — Carga Incremental HN | ✅ Concluída (100%) | Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental |
 
-> **Documentação completa:** [docs/PARTE_1/](docs/PARTE_1/) — checklist, testes automatizados, avaliação final.
+> **Documentação completa:** [docs/PARTE_1/](docs/PARTE_1/) e [docs/PARTE_2/](docs/PARTE_2/) — checklists, testes automatizados, avaliações finais.
 
 ---
 
@@ -69,13 +69,19 @@ src/cdb/
 │   ├── downloader.py    # download + parse da planilha (httpx/openpyxl)
 │   ├── browser.py       # setup do Playwright (headless/headed)
 │   └── filler.py        # preenchimento do formulário dinâmico
+├── hn/
+│   ├── __init__.py
+│   ├── client.py        # cliente HTTP async para HN API (httpx, retry, backoff)
+│   ├── loader.py        # lógica de carga incremental (watermark, batch, relatório)
+│   └── models.py        # Pydantic: HNItem, LoadReport
 └── db/
     ├── __init__.py
-    ├── database.py      # SQLite: init, CRUD, reset
+    ├── database.py      # SQLite: challenge_records + hn_items + watermark
     └── models.py        # Pydantic schemas
 
 tests/
-└── test_rpa.py          # 16 testes (pytest): parse, mapeamento, seletor, retry
+├── test_rpa.py          # 16 testes (pytest): parse, mapeamento, seletor, retry
+└── test_hn.py           # 21 testes (pytest): idempotência, UPSERT, retry, watermark
 
 docs/
 ├── TESTE.md                   # especificação original com progresso
@@ -85,12 +91,15 @@ docs/
 │   ├── TESTES_AUTOMATIZADOS.md # comprovação 16/16 testes
 │   └── AVALIACAO.md           # avaliação de conformidade final
 └── PARTE_2/
-    ├── README.md              # checklist HN API (pendente)
-    └── AVALIACAO.md           # status pendente
+    ├── README.md              # checklist HN API
+    ├── TESTES_AUTOMATIZADOS.md # comprovação 21/21 testes
+    └── AVALIACAO.md           # avaliação de conformidade final
 
 artifacts/
 ├── rpa_result_*.png    # screenshots das execuções
-└── rpa_result_*.json   # resultados estruturados
+├── rpa_result_*.json   # resultados estruturados
+├── hn_report_*.json    # relatórios de carga HN
+└── hn_report_*.txt     # sumário textual
 ```
 
 ---
@@ -126,6 +135,30 @@ curl -X POST http://localhost:8000/api/v1/rpa/run
 curl http://localhost:8000/api/v1/rpa/records
 ```
 
+### Hacker News
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `POST` | `/api/v1/hn/load?limit=N` | Carga inicial/incremental da HN API |
+| `GET` | `/api/v1/hn/items?limit=100&offset=0` | Lista itens persistidos |
+| `GET` | `/api/v1/hn/status` | Watermark, total e distribuição por tipo |
+
+### Fluxo HN
+
+```bash
+# 1. Carga inicial com limite de 100 itens
+curl -X POST "http://localhost:8000/api/v1/hn/load?limit=100"
+
+# 2. Carga incremental (apenas itens novos desde a última execução)
+curl -X POST "http://localhost:8000/api/v1/hn/load"
+
+# 3. Ver status e estatísticas
+curl http://localhost:8000/api/v1/hn/status
+
+# 4. Listar itens persistidos
+curl "http://localhost:8000/api/v1/hn/items?limit=10"
+```
+
 ---
 
 ## Resultados Obtidos — Parte 1 (RPA)
@@ -140,6 +173,22 @@ Evidências:        artifacts/rpa_result_*.png + artifacts/rpa_result_*.json
 ```
 
 > Documentação completa: [docs/PARTE_1/](docs/PARTE_1/) — checklist, testes, avaliação.
+
+---
+
+## Resultados Obtidos — Parte 2 (Hacker News)
+
+```
+Carga inicial:     5 itens (teste ao vivo da API HN)
+Idempotência:      ✅ Confirmada (2a execução: 0 duplicados)
+Persistência:      SQLite (hn_items + watermark)
+Resiliência:       Retry 3x c/ backoff (1s→2s→4s), timeout 30s, rate limit 100ms
+Testes:            21/21 passando (uv run pytest)
+Total:             37/37 passando (16 RPA + 21 HN)
+Evidências:        artifacts/hn_report_*.json + artifacts/hn_report_*.txt
+```
+
+> Documentação completa: [docs/PARTE_2/](docs/PARTE_2/) — checklist, testes, avaliação.
 
 ---
 
@@ -164,12 +213,24 @@ Se nenhum dos dois encontrar o campo, o erro é tratado com retry (3 tentativas)
 
 FastAPI oferece Swagger auto-gerado, o que demonstra profissionalismo na apresentação ao recrutador. A API também expõe o pipeline de forma modular: download, run, reset — cada etapa acionável separadamente.
 
+### Por que SQLite para ambas as partes?
+
+Zero-config, single-file, transacional. Suficiente para o volume do teste. O banco da Parte 1 (`challenge.db`) e o da Parte 2 (`hn_data.db`) são independentes, mantendo isolamento claro entre as duas soluções. Para volume real da HN (~49M itens), migrar para PostgreSQL com índices compostos.
+
+### Por que batch commit de 50 itens (Parte 2)?
+
+Commit individual por item seria inviável (Nx mais transações). Commit único no final arrisca perda total em caso de crash. Batch de 50 equilibra performance e resiliência — em caso de interrupção, perde-se no máximo 49 itens.
+
+### Por que watermark avança mesmo com IDs de falha?
+
+Se o watermark só avançasse após processamento contíguo (sem gaps), um único ID permanentemente inacessível bloquearia toda a carga futura. IDs com falha são registrados no relatório para retry manual, mas não bloqueiam o progresso.
+
 ---
 
 ## Limitações Conhecidas
 
 - **Parte 1**: Nenhuma limitação crítica. O seletor tem fallback automático (`ng-reflect-dictionary-value`), retry com backoff (3 tentativas, 1s/2s/3s), screenshot por erro e 16 testes automatizados.
-- **Parte 2**: Ainda não implementada.
+- **Parte 2**: Nenhuma limitação crítica. O loader usa batch commits (50 itens), upsert por `ON CONFLICT`, watermark atualizado a cada batch. A execução em modo full (sem `--limit`) pode levar horas dado o volume de ~49M de itens na HN, mas é funcional.
 
 ---
 
@@ -186,7 +247,9 @@ Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent 
 
 **Sessão OpenCode — Parte 1 + Kickoff do projeto:** [opncd.ai/share/9Km5LSLy](https://opncd.ai/share/9Km5LSLy)
 
-> A Parte 2 (Carga Incremental Hacker News) será desenvolvida em uma sessão separada.
+**Sessão OpenCode — Parte 2 (Carga Incremental HN):** [opncd.ai/share/tP58VfpQ](https://opncd.ai/share/tP58VfpQ)
+
+> A Parte 2 (Carga Incremental Hacker News) foi desenvolvida em sessão separada com OpenCode (deepseek-v4-pro): implementação dos módulos hn/client, hn/loader, hn/models, extensão do database e testes.
 
 ---
 
@@ -197,6 +260,9 @@ Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent 
 | Início do projeto | 29/07/2026 11:52 |
 | Conclusão da Etapa 1 | 29/07/2026 13:28 |
 | Início da Etapa 2 | 29/07/2026 13:59 |
+| Conclusão da Etapa 2 | 29/07/2026 14:06 |
+
+> **Nota:** O intervalo entre a conclusão da Etapa 1 (13:28) e o início da Etapa 2 (13:59) foi uma pausa entre as etapas.
 
 ---
 
