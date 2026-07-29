@@ -184,6 +184,8 @@ Este projeto utilizou **OpenCode** (modelo `deepseek-v4-pro`) como assistente de
 
 Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent sibling, estrutura de módulos) foram tomadas pelo candidato e validadas por testes de execução real. Nenhum código foi aceito sem verificação funcional completa.
 
+**Sessão completa de desenvolvimento:** [opncd.ai/share/9Km5LSLy](https://opncd.ai/share/9Km5LSLy)
+
 ---
 
 ## Licença
