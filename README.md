@@ -190,6 +190,16 @@ Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent 
 
 ---
 
+## Timeline
+
+| Marco | Data |
+|-------|------|
+| Início do projeto | 29/07/2026 11:52 |
+| Conclusão da Etapa 1 | 29/07/2026 13:28 |
+| Início da Etapa 2 | 29/07/2026 13:59 |
+
+---
+
 ## Licença
 
 MIT
