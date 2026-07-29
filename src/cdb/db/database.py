@@ -73,6 +73,7 @@ def insert_records(records: list[dict[str, str]]) -> int:
     import json
 
     conn = get_connection()
+    conn.execute("DELETE FROM challenge_records")
     inserted = 0
     for record in records:
         values = {

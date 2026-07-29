@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, Query
-from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from cdb.db.database import (
@@ -25,6 +24,7 @@ from cdb.hn.loader import run_load
 STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
 DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
 ARTIFACTS_DIR = Path(__file__).resolve().parent.parent.parent / "artifacts"
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 @asynccontextmanager
@@ -55,19 +55,14 @@ uv run cdb
     redoc_url="/redoc",
 )
 
-if STATIC_DIR.exists():
-    app.mount("/app", StaticFiles(directory=str(STATIC_DIR), html=True), name="app")
-
 if DOCS_DIR.exists():
     app.mount("/docs-files", StaticFiles(directory=str(DOCS_DIR), html=True), name="docs-files")
 
+if ROOT_DIR.exists():
+    app.mount("/docs-files-root", StaticFiles(directory=str(ROOT_DIR), html=True), name="docs-files-root")
+
 if ARTIFACTS_DIR.exists():
     app.mount("/artifacts", StaticFiles(directory=str(ARTIFACTS_DIR), html=True), name="artifacts")
-
-
-@app.get("/", include_in_schema=False)
-async def root():
-    return RedirectResponse(url="/app")
 
 
 @app.get("/health", tags=["Health"])
@@ -226,7 +221,7 @@ async def list_artifacts():
     entries = []
     if ARTIFACTS_DIR.exists():
         for f in sorted(ARTIFACTS_DIR.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
-            if f.is_file():
+            if f.is_file() and f.suffix.lower() in (".json", ".png", ".txt"):
                 stat = f.stat()
                 entries.append({
                     "name": f.name,
@@ -245,3 +240,49 @@ def _human_size(size: int) -> str:
             return f"{size:.1f} {unit}"
         size /= 1024
     return f"{size:.1f} TB"
+
+
+# ── Docs ────────────────────────────────────────────────────────────────
+
+
+@app.get(
+    "/api/v1/docs",
+    summary="📚 Listar Documentação",
+    description="Retorna a árvore de arquivos de documentação disponíveis.",
+    tags=["Documentação"],
+)
+async def list_docs():
+    tree = _build_docs_tree(DOCS_DIR, "")
+    readme_path = ROOT_DIR / "README.md"
+    if readme_path.exists():
+        try:
+            tree.insert(0, {
+                "name": "README.md",
+                "type": "file",
+                "path": "README.md",
+                "url": "/docs-files-root/README.md",
+            })
+        except Exception:
+            pass
+    return {"tree": tree}
+
+
+def _build_docs_tree(base: Path, prefix: str) -> list[dict]:
+    entries = []
+    if not base.exists():
+        return entries
+    for p in sorted(base.iterdir(), key=lambda x: (not x.is_dir(), x.name)):
+        rel = f"{prefix}/{p.name}" if prefix else p.name
+        if p.name.startswith(".") or p.name.startswith("__"):
+            continue
+        if p.is_dir():
+            children = _build_docs_tree(p, rel)
+            if children:
+                entries.append({"name": p.name, "type": "folder", "children": children})
+        elif p.suffix in (".md", ".txt", ".pdf"):
+            entries.append({"name": p.name, "type": "file", "path": rel, "url": f"/docs-files/{rel}"})
+    return entries
+
+
+if STATIC_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
