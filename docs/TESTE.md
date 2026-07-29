@@ -226,7 +226,7 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 
 > **Nota para o candidato:** Leia atentamente caso utilize ferramentas de IA (ChatGPT, Copilot, Claude, etc.) durante o teste.
 
-- [x] **Declarar no README** → OpenCode (deepseek-v4-pro) usado como assistente
+- [x] **Declarar no README** → OpenCode (`deepseek-v4-pro` e `GPT-5.5 xhigh`) usado como assistente
 - [x] Descrever quais partes foram auxiliadas por IA e quais foram feitas manualmente → boilerplate + debug de seletores
 - [x] Validar criticamente todo código gerado por IA → testado com execução real
 - [x] Decisões de arquitetura tomadas pelo candidato → Playwright vs Selenium, seletor CSS, estrutura modular
@@ -242,6 +242,7 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 |-------|-------|
 | **Data e hora de início** | 2026-07-29 12:00 |
 | **Data e hora de entrega** | 2026-07-29 14:06 |
+| **Projeto público** | [https://cdb-ff94.onrender.com/](https://cdb-ff94.onrender.com/) |
 | **Tempo total gasto (aproximado)** | ~2h06min |
 | **Parte 1 — RPA Challenge** | ✅ |
 | — Biblioteca utilizada | Playwright 1.61.0 |
@@ -256,7 +257,8 @@ Implementar um processo incremental que consuma a API oficial do Hacker News, pe
 | — Total inseridos / atualizados / falhas | 5 / 0 / 0 |
 | — Tempo de execução (5 itens) | ~1.7 segundos |
 | **Ferramentas de IA utilizadas** | |
-| — Quais ferramentas | OpenCode (deepseek-v4-pro) |
+| — Quais ferramentas | OpenCode (`deepseek-v4-pro` e `GPT-5.5 xhigh`) |
+| — Sessão GPT-5.5 xhigh | [opncd.ai/share/1uiGSnkj](https://opncd.ai/share/1uiGSnkj) |
 | — Quais partes do código | Boilerplate FastAPI, debug de seletores CSS, estruturação, módulo HN completo |
 | **Limitações conhecidas** | Parte 1: nenhuma. Parte 2: carga full sem --limit leva horas (~49M itens) com rate limit de 100ms. |
 | **Melhorias futuras** | Endpoint updates.json; paralelismo controlado; WebSocket para progresso; retry automático de IDs com falha |

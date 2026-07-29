@@ -166,6 +166,13 @@ const Dashboard = {
                         desenvolvida para o teste técnico de <strong>Desenvolvedor Sênior de Automação e Integração</strong>.
                     </p>
                 </div>
+                <div class="card info">
+                    <div class="card-label">Projeto Público</div>
+                    <p style="font-size:13px;color:var(--text-muted);line-height:1.7;margin-top:8px;margin-bottom:14px;">
+                        Ambiente online publicado para visualização pelo recrutador.
+                    </p>
+                    <a class="btn btn-primary" href="https://cdb-ff94.onrender.com/" target="_blank" rel="noopener noreferrer">Abrir projeto público ↗</a>
+                </div>
                 <div class="card">
                     <div class="card-label">Ações Rápidas</div>
                     <div class="btn-group" style="margin-top:8px;">

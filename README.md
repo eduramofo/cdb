@@ -11,6 +11,8 @@ API de automação construída com **FastAPI + Playwright + SQLite** para resolv
 
 > **Documentação completa:** [docs/PARTE_1/](docs/PARTE_1/) e [docs/PARTE_2/](docs/PARTE_2/) — checklists, testes automatizados, avaliações finais.
 
+> **Projeto público:** [https://cdb-ff94.onrender.com/](https://cdb-ff94.onrender.com/) — ambiente online para visualização pelo recrutador.
+
 ---
 
 ## Stack Tecnológica
@@ -236,7 +238,7 @@ Se o watermark só avançasse após processamento contíguo (sem gaps), um únic
 
 ## Uso de IA Generativa
 
-Este projeto utilizou **OpenCode** (modelo `deepseek-v4-pro`) como assistente de desenvolvimento. A ferramenta auxiliou em:
+Este projeto utilizou **OpenCode** com os modelos `deepseek-v4-pro` e `GPT-5.5 xhigh` como assistente de desenvolvimento. A ferramenta auxiliou em:
 
 - Estruturação inicial do projeto com uv, FastAPI e dependências
 - Geração de boilerplate (endpoints FastAPI, schema SQLite)
@@ -249,7 +251,11 @@ Todas as decisões de arquitetura (Playwright vs Selenium, seletor CSS adjacent 
 
 **Sessão OpenCode — Parte 2 (Carga Incremental HN):** [opncd.ai/share/tP58VfpQ](https://opncd.ai/share/tP58VfpQ)
 
-> A Parte 2 (Carga Incremental Hacker News) foi desenvolvida em sessão separada com OpenCode (deepseek-v4-pro): implementação dos módulos hn/client, hn/loader, hn/models, extensão do database e testes.
+**Sessão OpenCode — Mini-Frontend Dashboard:** [opncd.ai/share/ztv77gHu](https://opncd.ai/share/ztv77gHu)
+
+**Sessão OpenCode — Deploy Docker/Koyeb e documentação (GPT-5.5 xhigh):** [opncd.ai/share/1uiGSnkj](https://opncd.ai/share/1uiGSnkj)
+
+> O Mini-Frontend (SPA vanilla HTML/CSS/JS) foi desenvolvido em sessão adicional com OpenCode (deepseek-v4-pro): dashboard com 5 seções, renderizador markdown, auto-load HN, modais, toasts e melhorias de UX.
 
 ---
 
