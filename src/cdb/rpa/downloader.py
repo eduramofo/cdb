@@ -34,7 +34,8 @@ def parse_spreadsheet(filepath: Path) -> list[dict[str, str]]:
         for h, i in valid_headers:
             value = row[i] if i < len(row) else None
             record[h] = str(value).strip() if value is not None else ""
-        records.append(record)
+        if any(record.values()):
+            records.append(record)
 
     wb.close()
     filepath.unlink(missing_ok=True)
