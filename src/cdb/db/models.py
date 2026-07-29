@@ -1,0 +1,17 @@
+from pydantic import BaseModel
+
+
+class ChallengeRecord(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+    company_name: str = ""
+    role_in_company: str = ""
+    address: str = ""
+    email: str = ""
+    phone_number: str = ""
+
+
+class RecordSummary(BaseModel):
+    total: int
+    inserted: int
+    message: str
