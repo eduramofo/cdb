@@ -1,12 +1,8 @@
-import asyncio
-import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from cdb.db.database import (
-    get_hn_items_by_type,
-    get_hn_item_count,
     get_watermark,
     set_watermark,
     upsert_hn_items,
@@ -20,15 +16,13 @@ WATERMARK_KEY = "last_processed_id"
 
 
 class HnLoader:
-    def __init__(
-        self, client: HackerNewsClient, report_dir: str = "artifacts"
-    ) -> None:
+    def __init__(self, client: HackerNewsClient, report_dir: str = "artifacts") -> None:
         self.client = client
         self.report_dir = Path(report_dir) if Path(report_dir).is_absolute() else ARTIFACTS_DIR
         self.report_dir.mkdir(parents=True, exist_ok=True)
 
     async def load(self, limit: int | None = None) -> LoadReport:
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         start_iso = start_time.isoformat()
 
         max_item = await self.client.get_max_item_id()
@@ -37,10 +31,15 @@ class HnLoader:
 
         if last_processed_id is not None:
             range_start = last_processed_id + 1
-            logger.info(f"Watermark found: last_processed_id={last_processed_id}. Starting from {range_start}.")
+            logger.info(
+                "Watermark found: "
+                f"last_processed_id={last_processed_id}. Starting from {range_start}."
+            )
         elif limit is not None:
             range_start = max(1, max_item - limit + 1)
-            logger.info(f"No watermark. First run with --limit {limit}. Processing {range_start}..{max_item}")
+            logger.info(
+                f"No watermark. First run with limit={limit}. Processing {range_start}..{max_item}"
+            )
         else:
             range_start = 1
             logger.info(f"No watermark and no limit. Processing all items from 1 to {max_item}")
@@ -118,7 +117,7 @@ class HnLoader:
                 f"inserted={ins}, updated={upd}, watermark={highest_processed}"
             )
 
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         duration = (end_time - start_time).total_seconds()
 
         report = LoadReport(
@@ -141,7 +140,7 @@ class HnLoader:
         return report
 
     def _save_report(self, report: LoadReport) -> None:
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         json_path = self.report_dir / f"hn_report_{timestamp}.json"
         json_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
 
@@ -155,25 +154,21 @@ class HnLoader:
 
     def _format_summary(self, report: LoadReport) -> str:
         return (
-            f"\n{'='*60}\n"
+            f"\n{'=' * 60}\n"
             f"Hacker News Carga — Relatório\n"
-            f"{'='*60}\n"
+            f"{'=' * 60}\n"
             f"Início:      {report.start_time}\n"
             f"Fim:          {report.end_time}\n"
             f"Duração:     {report.duration_seconds:.1f}s\n"
             f"Faixa:       {report.range_start} → {report.range_end}\n"
-            f"{'─'*60}\n"
+            f"{'─' * 60}\n"
             f"Consultados: {report.total_consulted}\n"
             f"Inseridos:   {report.inserted}\n"
             f"Atualizados: {report.updated}\n"
             f"Ignorados:   {report.ignored}\n"
             f"Falhas:      {report.failed}"
-            + (
-                f" (IDs: {', '.join(map(str, report.failed_ids))})"
-                if report.failed_ids
-                else ""
-            )
-            + f"\n{'='*60}\n"
+            + (f" (IDs: {', '.join(map(str, report.failed_ids))})" if report.failed_ids else "")
+            + f"\n{'=' * 60}\n"
         )
 
 

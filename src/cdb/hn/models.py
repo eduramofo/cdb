@@ -1,25 +1,24 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
 class HNItem(BaseModel):
     id: int
-    deleted: Optional[bool] = None
-    type: Optional[str] = None
-    by: Optional[str] = None
-    time: Optional[int] = None
-    title: Optional[str] = None
-    url: Optional[str] = None
-    text: Optional[str] = None
-    dead: Optional[bool] = None
-    score: Optional[int] = None
-    descendants: Optional[int] = None
-    parent: Optional[int] = None
-    poll: Optional[int] = None
-    kids: Optional[list[int]] = None
-    parts: Optional[list[int]] = None
+    deleted: bool | None = None
+    type: str | None = None
+    by: str | None = None
+    time: int | None = None
+    title: str | None = None
+    url: str | None = None
+    text: str | None = None
+    dead: bool | None = None
+    score: int | None = None
+    descendants: int | None = None
+    parent: int | None = None
+    poll: int | None = None
+    kids: list[int] | None = None
+    parts: list[int] | None = None
     raw_json: str = ""
     fetched_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())
@@ -40,7 +39,7 @@ class LoadReport(BaseModel):
 
 
 class HNStatus(BaseModel):
-    last_processed_id: Optional[int] = None
-    max_item_id: Optional[int] = None
+    last_processed_id: int | None = None
+    max_item_id: int | None = None
     total_items: int = 0
     items_by_type: dict[str, int] = {}

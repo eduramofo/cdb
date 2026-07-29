@@ -1,13 +1,18 @@
-import json
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from openpyxl import Workbook
 
-from cdb.rpa.downloader import download_spreadsheet, parse_spreadsheet
-from cdb.rpa.filler import FIELD_MAP, _FILL_RETRIES, _fill_form, _fill_field_with_retry, _locator_for_field
+from cdb.rpa.downloader import parse_spreadsheet
+from cdb.rpa.filler import (
+    _FILL_RETRIES,
+    FIELD_MAP,
+    _fill_field_with_retry,
+    _fill_form,
+    _locator_for_field,
+)
 
 
 class TestFieldMapping:
@@ -24,7 +29,7 @@ class TestFieldMapping:
         assert set(FIELD_MAP.keys()) == expected
 
     def test_label_matches_database_column(self):
-        for db_field, form_label in FIELD_MAP.items():
+        for db_field in FIELD_MAP:
             col = db_field.lower().replace(" ", "_")
             assert col in {
                 "first_name",
@@ -48,9 +53,39 @@ class TestParseSpreadsheet:
     def test_parse_valid_spreadsheet(self):
         wb = Workbook()
         ws = wb.active
-        ws.append(["First Name", "Last Name", "Company Name", "Role in Company", "Address", "Email", "Phone Number"])
-        ws.append(["John", "Smith", "IT Solutions", "Analyst", "98 North Road", "jsmith@itsolutions.co.uk", "40716543298"])
-        ws.append(["Jane", "Dorsey", "MediCare", "Medical Engineer", "11 Crown Street", "jdorsey@mc.com", "40791345621"])
+        ws.append(
+            [
+                "First Name",
+                "Last Name",
+                "Company Name",
+                "Role in Company",
+                "Address",
+                "Email",
+                "Phone Number",
+            ]
+        )
+        ws.append(
+            [
+                "John",
+                "Smith",
+                "IT Solutions",
+                "Analyst",
+                "98 North Road",
+                "jsmith@itsolutions.co.uk",
+                "40716543298",
+            ]
+        )
+        ws.append(
+            [
+                "Jane",
+                "Dorsey",
+                "MediCare",
+                "Medical Engineer",
+                "11 Crown Street",
+                "jdorsey@mc.com",
+                "40791345621",
+            ]
+        )
 
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
             wb.save(tmp.name)
@@ -68,8 +103,28 @@ class TestParseSpreadsheet:
     def test_parse_filters_empty_rows(self):
         wb = Workbook()
         ws = wb.active
-        ws.append(["First Name", "Last Name", "Company Name", "Role in Company", "Address", "Email", "Phone Number"])
-        ws.append(["John", "Smith", "IT Solutions", "Analyst", "98 North Road", "jsmith@itsolutions.co.uk", "40716543298"])
+        ws.append(
+            [
+                "First Name",
+                "Last Name",
+                "Company Name",
+                "Role in Company",
+                "Address",
+                "Email",
+                "Phone Number",
+            ]
+        )
+        ws.append(
+            [
+                "John",
+                "Smith",
+                "IT Solutions",
+                "Analyst",
+                "98 North Road",
+                "jsmith@itsolutions.co.uk",
+                "40716543298",
+            ]
+        )
         ws.append([None, None, None, None, None, None, None])
         ws.append(["", "", "", "", "", "", ""])
 
@@ -132,7 +187,6 @@ class TestParseSpreadsheet:
 
 class TestSelectorResilience:
     def test_selector_finds_correct_input(self):
-        from cdb.rpa.filler import FIELD_MAP
 
         css = 'label:text-is("First Name") + input'
         assert "label:text-is" in css
@@ -246,7 +300,15 @@ class TestSelectorResilience:
                 </body></html>
             """)
 
-            record = {"first_name": "John", "last_name": "", "company_name": "", "role_in_company": "", "address": "", "email": "john@acme.com", "phone_number": ""}
+            record = {
+                "first_name": "John",
+                "last_name": "",
+                "company_name": "",
+                "role_in_company": "",
+                "address": "",
+                "email": "john@acme.com",
+                "phone_number": "",
+            }
 
             await _fill_form(page, record)
 
@@ -322,9 +384,6 @@ class _MockSuccessPage:
 
     async def fill(self, value: str):
         self.fill_count += 1
-
-
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager

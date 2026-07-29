@@ -3,7 +3,7 @@ import json
 import logging
 import re
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from playwright.async_api import Page
@@ -34,11 +34,14 @@ _FILL_BACKOFF_BASE = 1.0
 async def run_challenge(headed: bool = False) -> dict:
     records = get_all_records()
     if not records:
-        return {"status": "error", "message": "Nenhum registro no banco. Execute /download-sheet primeiro."}
+        return {
+            "status": "error",
+            "message": "Nenhum registro no banco. Execute /download-sheet primeiro.",
+        }
 
     browser, context, page = await launch_browser(headed=headed)
     start_time = time.time()
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
     try:
         await page.goto(RPA_URL, wait_until="domcontentloaded")
@@ -124,19 +127,28 @@ async def _locator_for_field(page: Page, label: str):
     if await fallback.count() > 0:
         return fallback
 
-    raise Exception(f"Campo '{label}' não encontrado (nem label adjacente, nem ng-reflect-dictionary-value)")
+    raise Exception(
+        f"Campo '{label}' não encontrado (nem label adjacente, nem ng-reflect-dictionary-value)"
+    )
 
 
 def _parse_challenge_result(text: str) -> dict:
     match = re.search(r"success rate is (\d+)% \( (\d+) out of (\d+) fields\)", text)
     if match:
         return {
-            "message": f"Your success rate is {match.group(1)}% ({match.group(2)} out of {match.group(3)} fields)",
+            "message": (
+                f"Your success rate is {match.group(1)}% "
+                f"({match.group(2)} out of {match.group(3)} fields)"
+            ),
             "rate": int(match.group(1)),
             "correct": int(match.group(2)),
             "total": int(match.group(3)),
         }
-    fallback = text.split("Congratulations!")[-1].strip().split("\n")[0] if "Congratulations!" in text else "unknown"
+    fallback = (
+        text.split("Congratulations!")[-1].strip().split("\n")[0]
+        if "Congratulations!" in text
+        else "unknown"
+    )
     return {"message": fallback, "rate": 0, "correct": 0, "total": 0}
 
 

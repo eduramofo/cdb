@@ -27,6 +27,7 @@ API de automação construída com **FastAPI + Playwright + SQLite** para resolv
 | **SQLite** | Persistência local zero-config, ideal para o escopo do teste |
 | **Uvicorn** | Servidor ASGI para execução da API FastAPI |
 | **Pydantic** | Modelagem e serialização dos dados da API e relatórios |
+| **Ruff** | Lint, organização de imports e formatação consistente do código Python |
 | **HTML/CSS/JS vanilla** | Mini-frontend de apresentação servido pela própria API |
 | **Docker / Docker Compose** | Empacotamento para deploy e execução local reproduzível |
 
@@ -75,6 +76,18 @@ O `docker-compose.yml` sobe o mesmo app em `http://localhost:8000`, com volume p
 ```bash
 uv run pytest -v
 ```
+
+### Qualidade de Código
+
+```bash
+# Verificar lint, imports e regras de qualidade
+uv run ruff check .
+
+# Formatar o código Python
+uv run ruff format .
+```
+
+O Ruff está configurado no `pyproject.toml` para cobrir `src/` e `tests/`, com foco em erros reais, imports organizados, modernização Python e simplificações seguras.
 
 ---
 

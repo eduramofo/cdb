@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Optional
 
 import httpx
 
@@ -15,7 +14,7 @@ RATE_LIMIT_DELAY = 0.1
 
 class HackerNewsClient:
     def __init__(self, timeout: float = REQUEST_TIMEOUT) -> None:
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self.timeout = timeout
 
     async def _ensure_client(self) -> httpx.AsyncClient:
@@ -33,20 +32,17 @@ class HackerNewsClient:
         response = await client.get(f"{BASE_URL}/maxitem.json")
         return int(response.text.strip())
 
-    async def get_item(self, item_id: int) -> Optional[dict]:
-        client = await self._ensure_client()
+    async def get_item(self, item_id: int) -> dict | None:
         await asyncio.sleep(RATE_LIMIT_DELAY)
         try:
-            data = await self._get_with_retry(
-                f"{BASE_URL}/item/{item_id}.json"
-            )
+            data = await self._get_with_retry(f"{BASE_URL}/item/{item_id}.json")
             return data if data is not None else None
         except Exception as e:
             logger.warning(f"Item {item_id}: failed after retries — {e}")
             return None
 
-    async def _get_with_retry(self, url: str) -> Optional[dict]:
-        last_exception: Optional[Exception] = None
+    async def _get_with_retry(self, url: str) -> dict | None:
+        last_exception: Exception | None = None
         for attempt in range(RETRY_COUNT):
             try:
                 client = await self._ensure_client()
@@ -54,13 +50,12 @@ class HackerNewsClient:
                 if response.status_code == 200:
                     return response.json()
                 logger.warning(
-                    f"GET {url} returned {response.status_code} (attempt {attempt + 1}/{RETRY_COUNT})"
+                    f"GET {url} returned {response.status_code} "
+                    f"(attempt {attempt + 1}/{RETRY_COUNT})"
                 )
                 last_exception = Exception(f"HTTP {response.status_code}")
             except (httpx.TimeoutException, httpx.ConnectError) as e:
-                logger.warning(
-                    f"GET {url} failed (attempt {attempt + 1}/{RETRY_COUNT}): {e}"
-                )
+                logger.warning(f"GET {url} failed (attempt {attempt + 1}/{RETRY_COUNT}): {e}")
                 last_exception = e
 
             if attempt < RETRY_COUNT - 1:

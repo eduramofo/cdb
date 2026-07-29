@@ -1,6 +1,3 @@
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
-
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
 

@@ -98,7 +98,8 @@ def insert_records(records: list[dict[str, str]]) -> int:
         conn.execute(
             """
             INSERT INTO challenge_records
-                (first_name, last_name, company_name, role_in_company, address, email, phone_number, raw_json)
+                (first_name, last_name, company_name, role_in_company,
+                 address, email, phone_number, raw_json)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
@@ -154,9 +155,7 @@ def upsert_hn_items(items: list[dict]) -> tuple[int, int]:
         raw_json = json.dumps(item, ensure_ascii=False)
         now = __import__("datetime").datetime.now().isoformat()
 
-        existing = conn.execute(
-            "SELECT id FROM hn_items WHERE id = ?", (item["id"],)
-        ).fetchone()
+        existing = conn.execute("SELECT id FROM hn_items WHERE id = ?", (item["id"],)).fetchone()
 
         if existing:
             conn.execute(
@@ -244,18 +243,14 @@ def get_hn_item_count() -> int:
 
 def get_hn_items_by_type() -> dict[str, int]:
     conn = get_hn_connection()
-    rows = conn.execute(
-        "SELECT type, COUNT(*) as cnt FROM hn_items GROUP BY type"
-    ).fetchall()
+    rows = conn.execute("SELECT type, COUNT(*) as cnt FROM hn_items GROUP BY type").fetchall()
     conn.close()
     return {r["type"]: r["cnt"] for r in rows}
 
 
 def get_watermark(key: str) -> str | None:
     conn = get_hn_connection()
-    row = conn.execute(
-        "SELECT value FROM watermark WHERE key = ?", (key,)
-    ).fetchone()
+    row = conn.execute("SELECT value FROM watermark WHERE key = ?", (key,)).fetchone()
     conn.close()
     return row["value"] if row else None
 

@@ -1,6 +1,6 @@
-from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
-from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
@@ -16,9 +16,9 @@ from cdb.db.database import (
     init_db,
     insert_records,
 )
+from cdb.hn.loader import run_load
 from cdb.rpa.downloader import download_spreadsheet, parse_spreadsheet
 from cdb.rpa.filler import run_challenge
-from cdb.hn.loader import run_load
 
 STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
 DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
@@ -27,7 +27,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     init_db()
     yield
 
@@ -39,8 +39,10 @@ API de automação para o teste técnico prático de **Desenvolvedor Sênior de 
 
 ## Funcionalidades
 
-- **RPA Challenge**: Download, parse e armazenamento da planilha oficial do [RPA Challenge](https://rpachallenge.com)
-- **Carga Incremental Hacker News**: Consumo da [Hacker News API](https://github.com/HackerNews/API) com persistência incremental
+- **RPA Challenge**: Download, parse e armazenamento da planilha oficial do
+  [RPA Challenge](https://rpachallenge.com)
+- **Carga Incremental Hacker News**: Consumo da
+  [Hacker News API](https://github.com/HackerNews/API) com persistência incremental
 
 ## Execução
 
@@ -58,7 +60,11 @@ if DOCS_DIR.exists():
     app.mount("/docs-files", StaticFiles(directory=str(DOCS_DIR), html=True), name="docs-files")
 
 if ROOT_DIR.exists():
-    app.mount("/docs-files-root", StaticFiles(directory=str(ROOT_DIR), html=True), name="docs-files-root")
+    app.mount(
+        "/docs-files-root",
+        StaticFiles(directory=str(ROOT_DIR), html=True),
+        name="docs-files-root",
+    )
 
 if ARTIFACTS_DIR.exists():
     app.mount("/artifacts", StaticFiles(directory=str(ARTIFACTS_DIR), html=True), name="artifacts")
@@ -116,7 +122,10 @@ async def list_records():
 @app.post(
     "/api/v1/rpa/reset",
     summary="🔄 Resetar Base",
-    description="Remove todos os registros da tabela `challenge_records`. Útil para reexecutar o pipeline do zero.",
+    description=(
+        "Remove todos os registros da tabela `challenge_records`. "
+        "Útil para reexecutar o pipeline do zero."
+    ),
     tags=["RPA Challenge"],
 )
 async def reset_records():
@@ -171,7 +180,7 @@ Nas execuções seguintes, carrega apenas os itens novos desde a última execuç
 """,
     tags=["Hacker News"],
 )
-async def hn_load(limit: Optional[int] = Query(None, ge=1)):
+async def hn_load(limit: int | None = Query(None, ge=1)):
     report = await run_load(limit=limit)
     return report.model_dump()
 
@@ -195,7 +204,9 @@ async def hn_items(limit: int = Query(100, ge=1, le=1000), offset: int = Query(0
 @app.get(
     "/api/v1/hn/status",
     summary="📊 Status da Carga HN",
-    description="Retorna o status atual da carga: watermark, total de itens e distribuição por tipo.",
+    description=(
+        "Retorna o status atual da carga: watermark, total de itens e distribuição por tipo."
+    ),
     tags=["Hacker News"],
 )
 async def hn_status():
@@ -213,7 +224,10 @@ async def hn_status():
 @app.get(
     "/api/v1/artifacts",
     summary="📁 Listar Artifacts",
-    description="Lista recursivamente os arquivos de artifacts (JSON, PNG, TXT), incluindo proof_files, com metadados.",
+    description=(
+        "Lista recursivamente os arquivos de artifacts (JSON, PNG, TXT), "
+        "incluindo proof_files, com metadados."
+    ),
     tags=["Artifacts"],
 )
 async def list_artifacts():
@@ -224,15 +238,17 @@ async def list_artifacts():
             if f.is_file() and f.suffix.lower() in (".json", ".png", ".txt"):
                 stat = f.stat()
                 relative_path = f.relative_to(ARTIFACTS_DIR).as_posix()
-                entries.append({
-                    "name": f.name,
-                    "relative_path": relative_path,
-                    "path": f"artifacts/{relative_path}",
-                    "size": stat.st_size,
-                    "size_human": _human_size(stat.st_size),
-                    "modified": stat.st_mtime,
-                    "extension": f.suffix.lower(),
-                })
+                entries.append(
+                    {
+                        "name": f.name,
+                        "relative_path": relative_path,
+                        "path": f"artifacts/{relative_path}",
+                        "size": stat.st_size,
+                        "size_human": _human_size(stat.st_size),
+                        "modified": stat.st_mtime,
+                        "extension": f.suffix.lower(),
+                    }
+                )
     return {"total": len(entries), "files": entries}
 
 
@@ -257,15 +273,16 @@ async def list_docs():
     tree = _build_docs_tree(DOCS_DIR, "")
     readme_path = ROOT_DIR / "README.md"
     if readme_path.exists():
-        try:
-            tree.insert(0, {
-                "name": "README.md",
-                "type": "file",
-                "path": "README.md",
-                "url": "/docs-files-root/README.md",
-            })
-        except Exception:
-            pass
+        with suppress(Exception):
+            tree.insert(
+                0,
+                {
+                    "name": "README.md",
+                    "type": "file",
+                    "path": "README.md",
+                    "url": "/docs-files-root/README.md",
+                },
+            )
     return {"tree": tree}
 
 
@@ -282,7 +299,9 @@ def _build_docs_tree(base: Path, prefix: str) -> list[dict]:
             if children:
                 entries.append({"name": p.name, "type": "folder", "children": children})
         elif p.suffix in (".md", ".txt", ".pdf"):
-            entries.append({"name": p.name, "type": "file", "path": rel, "url": f"/docs-files/{rel}"})
+            entries.append(
+                {"name": p.name, "type": "file", "path": rel, "url": f"/docs-files/{rel}"}
+            )
     return entries
 
 

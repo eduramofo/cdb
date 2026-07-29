@@ -4,7 +4,6 @@ from pathlib import Path
 import httpx
 from openpyxl import load_workbook
 
-
 CHALLENGE_URL = "https://rpachallenge.com/assets/downloadFiles/challenge.xlsx"
 
 

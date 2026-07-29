@@ -1,14 +1,14 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from cdb.db.database import (
     get_hn_connection,
-    get_hn_items,
     get_hn_item_count,
+    get_hn_items,
     get_hn_items_by_type,
     get_watermark,
     init_db,
@@ -16,9 +16,8 @@ from cdb.db.database import (
     upsert_hn_items,
 )
 from cdb.hn.client import HackerNewsClient
-from cdb.hn.loader import HnLoader, run_load
+from cdb.hn.loader import HnLoader
 from cdb.hn.models import HNItem, LoadReport
-
 
 # ── Fixtures ────────────────────────────────────────────────────────────
 
@@ -395,7 +394,7 @@ class TestHnLoader:
             client._client = mock_httpx
 
             loader = HnLoader(client, report_dir=tmpdir)
-            report = await loader.load(limit=1)
+            await loader.load(limit=1)
 
             json_files = list(Path(tmpdir).glob("hn_report_*.json"))
             assert len(json_files) == 1
