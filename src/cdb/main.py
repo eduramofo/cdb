@@ -12,6 +12,7 @@ from cdb.db.database import (
     insert_records,
 )
 from cdb.rpa.downloader import download_spreadsheet, parse_spreadsheet
+from cdb.rpa.filler import run_challenge
 
 
 @asynccontextmanager
@@ -110,3 +111,29 @@ async def reset_records():
         "deleted": count_before,
         "message": f"{count_before} registros removidos. Base limpa.",
     }
+
+
+@app.post(
+    "/api/v1/rpa/run",
+    summary="🤖 Executar Automação RPA",
+    description="""
+Abre o navegador (Playwright + Chromium), acessa o [RPA Challenge](https://rpachallenge.com)
+e preenche o formulário dinâmico com os registros persistidos no banco.
+
+**Fluxo:**
+1. Lê todos os registros da tabela `challenge_records`
+2. Abre navegador Chromium via Playwright
+3. Acessa https://rpachallenge.com e clica em **Start**
+4. Para cada registro, identifica campos por `label` e preenche
+5. Clica **Submit** e aguarda o próximo formulário
+6. Captura screenshot do resultado final
+7. Salva evidências em `artifacts/`
+
+**Parâmetros:**
+- `headed` (query param, default `false`): abre janela visível do navegador para debug
+""",
+    tags=["RPA Challenge"],
+)
+async def rpa_run(headed: bool = False):
+    result = await run_challenge(headed=headed)
+    return result
