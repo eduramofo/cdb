@@ -183,8 +183,8 @@ Carga inicial:     5 itens (teste ao vivo da API HN)
 Idempotência:      ✅ Confirmada (2a execução: 0 duplicados)
 Persistência:      SQLite (hn_items + watermark)
 Resiliência:       Retry 3x c/ backoff (1s→2s→4s), timeout 30s, rate limit 100ms
-Testes:            21/21 passando (uv run pytest)
-Total:             37/37 passando (16 RPA + 21 HN)
+Testes:            28/28 passando (uv run pytest)
+Total:             44/44 passando (16 RPA + 28 HN)
 Evidências:        artifacts/hn_report_*.json + artifacts/hn_report_*.txt
 ```
 

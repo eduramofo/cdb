@@ -76,6 +76,32 @@ POLL = {
     "score": 20,
     "descendants": 10,
     "kids": [37854004, 37854005],
+    "parts": [37854004, 37854005],
+}
+
+POLLOPT = {
+    "id": 37854004,
+    "type": "pollopt",
+    "by": "voter",
+    "time": 1753800400,
+    "text": "Option A",
+    "score": 15,
+    "poll": 37854003,
+}
+
+DELETED_ITEM = {
+    "id": 99999999,
+    "deleted": True,
+}
+
+DEAD_ITEM = {
+    "id": 37854005,
+    "type": "comment",
+    "by": "spammer",
+    "time": 1753800500,
+    "text": "Buy cheap stuff",
+    "dead": True,
+    "parent": 37854003,
 }
 
 
@@ -111,6 +137,26 @@ class TestHNItemModel:
         assert item.id == 37854003
         assert item.type == "poll"
         assert item.kids == [37854004, 37854005]
+        assert item.parts == [37854004, 37854005]
+
+    def test_parse_pollopt(self):
+        item = HNItem(**POLLOPT)
+        assert item.id == 37854004
+        assert item.type == "pollopt"
+        assert item.poll == 37854003
+        assert item.score == 15
+
+    def test_parse_deleted_item(self):
+        item = HNItem(**DELETED_ITEM)
+        assert item.id == 99999999
+        assert item.deleted is True
+        assert item.type is None
+
+    def test_parse_dead_item(self):
+        item = HNItem(**DEAD_ITEM)
+        assert item.id == 37854005
+        assert item.dead is True
+        assert item.type == "comment"
 
 
 class TestUpsert:
@@ -157,6 +203,28 @@ class TestUpsert:
         raw = json.loads(items[0]["raw_json"])
         assert raw["id"] == STORY["id"]
         assert raw["title"] == STORY["title"]
+
+    def test_deleted_item_stored_with_flag(self):
+        upsert_hn_items([DELETED_ITEM])
+        items = get_hn_items()
+        assert len(items) == 1
+        assert items[0]["id"] == 99999999
+        assert items[0]["deleted"] == 1
+        assert items[0]["type"] is None
+
+    def test_dead_item_stored_with_flag(self):
+        upsert_hn_items([DEAD_ITEM])
+        items = get_hn_items()
+        assert items[0]["dead"] == 1
+
+    def test_poll_fields_stored(self):
+        upsert_hn_items([POLL, POLLOPT])
+        items = get_hn_items()
+        assert len(items) == 2
+        poll_item = next(i for i in items if i["id"] == 37854003)
+        pollopt_item = next(i for i in items if i["id"] == 37854004)
+        assert poll_item["parts"] is not None
+        assert pollopt_item["poll"] == 37854003
 
 
 class TestWatermark:
@@ -275,6 +343,29 @@ class TestHnLoader:
 
         mock_httpx = AsyncMock()
         mock_httpx.get.side_effect = [maxitem_response, null_response]
+
+        client = HackerNewsClient(timeout=30)
+        client._client = mock_httpx
+
+        loader = HnLoader(client)
+        report = await loader.load(limit=1)
+
+        assert report.ignored == 1
+        assert report.inserted == 0
+
+    @pytest.mark.asyncio
+    async def test_loader_handles_deleted_item(self):
+        set_watermark("last_processed_id", "1000")
+
+        maxitem_response = Mock()
+        maxitem_response.text = "1001"
+
+        deleted_response = Mock()
+        deleted_response.status_code = 200
+        deleted_response.json.return_value = {"id": 1001, "deleted": True}
+
+        mock_httpx = AsyncMock()
+        mock_httpx.get.side_effect = [maxitem_response, deleted_response]
 
         client = HackerNewsClient(timeout=30)
         client._client = mock_httpx

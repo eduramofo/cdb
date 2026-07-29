@@ -6,16 +6,20 @@ from pydantic import BaseModel, Field
 
 class HNItem(BaseModel):
     id: int
+    deleted: Optional[bool] = None
     type: Optional[str] = None
     by: Optional[str] = None
     time: Optional[int] = None
     title: Optional[str] = None
     url: Optional[str] = None
     text: Optional[str] = None
+    dead: Optional[bool] = None
     score: Optional[int] = None
     descendants: Optional[int] = None
     parent: Optional[int] = None
+    poll: Optional[int] = None
     kids: Optional[list[int]] = None
+    parts: Optional[list[int]] = None
     raw_json: str = ""
     fetched_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat())

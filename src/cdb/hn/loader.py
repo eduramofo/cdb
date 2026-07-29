@@ -84,6 +84,11 @@ class HnLoader:
                     highest_processed = item_id
                     continue
 
+                if result.get("deleted"):
+                    ignored += 1
+                    highest_processed = item_id
+                    continue
+
                 batch.append(result)
                 highest_processed = item_id
 

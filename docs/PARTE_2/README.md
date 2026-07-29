@@ -4,7 +4,7 @@
 
 **Base URL:** `https://hacker-news.firebaseio.com/v0/`
 
-**Status:** ✅ Concluída — 21/21 testes passando | 37/37 total
+**Status:** ✅ Concluída — 28/28 testes passando | 44/44 total
 
 ---
 
@@ -14,16 +14,20 @@
 - [x] Escolher e justificar banco de dados (SQLite recomendado)
 - [x] Definir schema da tabela de itens:
   - [x] `id` (integer, primary key — ID do item no HN)
+  - [x] `deleted` (integer — `true` se item foi deletado)
   - [x] `type` (text — job, story, comment, poll, pollopt)
   - [x] `by` (text — autor)
   - [x] `time` (integer — timestamp Unix)
   - [x] `title` (text, nullable)
   - [x] `url` (text, nullable)
   - [x] `text` (text, nullable)
+  - [x] `dead` (integer — `true` se item está morto)
   - [x] `score` (integer, nullable)
   - [x] `descendants` (integer, nullable)
   - [x] `parent` (integer, nullable)
+  - [x] `poll` (integer, nullable — ID do poll associado ao pollopt)
   - [x] `kids` (text, nullable — JSON array de IDs)
+  - [x] `parts` (text, nullable — JSON array de pollopts)
   - [x] `raw_json` (text — JSON bruto completo)
   - [x] `fetched_at` (text — timestamp da coleta)
   - [x] `updated_at` (text — timestamp da última atualização)
@@ -46,7 +50,9 @@
 - [x] Para cada ID no intervalo, fazer `GET /item/{id}.json`
 - [x] Implementar retry com backoff exponencial (3 tentativas, 1s/2s/4s)
 - [x] Tratar timeouts (timeout por request: 30s)
-- [x] Tratar itens nulos (a API retorna `null` para IDs deletados ou inválidos)
+- [x] Tratar itens nulos (API retorna `null` para IDs inexistentes)
+- [x] Tratar itens deletados (`deleted: true` → ignorados, não persiste)
+- [x] Tratar itens mortos (`dead: true` → persistidos com flag)
 - [x] Implementar rate limiting respeitoso (delay entre requests: 100ms)
 - [x] Registrar falhas por ID para relatório (não abortar toda a execução)
 
@@ -105,16 +111,20 @@ src/cdb/db/
 ```sql
 CREATE TABLE IF NOT EXISTS hn_items (
     id          INTEGER PRIMARY KEY,
+    deleted     INTEGER DEFAULT 0,
     type        TEXT,
     by          TEXT,
     time        INTEGER,
     title       TEXT,
     url         TEXT,
     text        TEXT,
+    dead        INTEGER DEFAULT 0,
     score       INTEGER,
     descendants INTEGER,
     parent      INTEGER,
+    poll        INTEGER,
     kids        TEXT,
+    parts       TEXT,
     raw_json    TEXT NOT NULL,
     fetched_at  TEXT DEFAULT (datetime('now')),
     updated_at  TEXT DEFAULT (datetime('now'))
@@ -150,12 +160,12 @@ CREATE TABLE IF NOT EXISTS watermark (
 
 | # | Teste | Arquivo |
 |---|-------|---------|
-| 1 | Parse de item: story, comment, job, poll | `test_hn.py::TestHNItemModel` (4) |
-| 2 | UPSERT: insert, update, mixed, idempotency, raw_json | `test_hn.py::TestUpsert` (5) |
+| 1 | Parse de item: story, comment, job, poll, pollopt, deleted, dead | `test_hn.py::TestHNItemModel` (7) |
+| 2 | UPSERT: insert, update, mixed, idempotency, raw_json, deleted, dead, poll/parts | `test_hn.py::TestUpsert` (8) |
 | 3 | Watermark: get/set/overwrite | `test_hn.py::TestWatermark` (3) |
 | 4 | Agrupamento por tipo | `test_hn.py::TestHNItemsByType` (2) |
 | 5 | Retry e backoff (mock) | `test_hn.py::TestHackerNewsClient` (3) |
-| 6 | Loader: watermark avança, null item, relatório | `test_hn.py::TestHnLoader` (3) |
+| 6 | Loader: watermark avança, null item, deleted item, relatório | `test_hn.py::TestHnLoader` (4) |
 | 7 | Relatório serialização | `test_hn.py::TestLoadReport` (1) |
 
 ---

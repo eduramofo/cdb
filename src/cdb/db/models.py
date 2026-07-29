@@ -21,15 +21,19 @@ class RecordSummary(BaseModel):
 
 class HNItemResponse(BaseModel):
     id: int
+    deleted: Optional[int] = None
     type: Optional[str] = None
     by: Optional[str] = None
     time: Optional[int] = None
     title: Optional[str] = None
     url: Optional[str] = None
     text: Optional[str] = None
+    dead: Optional[int] = None
     score: Optional[int] = None
     descendants: Optional[int] = None
     parent: Optional[int] = None
+    poll: Optional[int] = None
     kids: Optional[str] = None
+    parts: Optional[str] = None
     fetched_at: Optional[str] = None
     updated_at: Optional[str] = None

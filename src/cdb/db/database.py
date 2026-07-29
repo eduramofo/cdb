@@ -44,21 +44,31 @@ def init_db() -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS hn_items (
             id          INTEGER PRIMARY KEY,
+            deleted     INTEGER DEFAULT 0,
             type        TEXT,
             by          TEXT,
             time        INTEGER,
             title       TEXT,
             url         TEXT,
             text        TEXT,
+            dead        INTEGER DEFAULT 0,
             score       INTEGER,
             descendants INTEGER,
             parent      INTEGER,
+            poll        INTEGER,
             kids        TEXT,
+            parts       TEXT,
             raw_json    TEXT NOT NULL,
             fetched_at  TEXT DEFAULT (datetime('now')),
             updated_at  TEXT DEFAULT (datetime('now'))
         )
     """)
+    for col in ["deleted", "dead", "poll", "parts"]:
+        try:
+            col_type = "INTEGER DEFAULT 0" if col in ("deleted", "dead") else "INTEGER"
+            conn.execute(f"ALTER TABLE hn_items ADD COLUMN {col} {col_type}")
+        except sqlite3.OperationalError:
+            pass
     conn.execute("""
         CREATE TABLE IF NOT EXISTS watermark (
             key   TEXT PRIMARY KEY,
@@ -140,6 +150,7 @@ def upsert_hn_items(items: list[dict]) -> tuple[int, int]:
 
     for item in items:
         kids_json = json.dumps(item.get("kids")) if item.get("kids") else None
+        parts_json = json.dumps(item.get("parts")) if item.get("parts") else None
         raw_json = json.dumps(item, ensure_ascii=False)
         now = __import__("datetime").datetime.now().isoformat()
 
@@ -151,22 +162,26 @@ def upsert_hn_items(items: list[dict]) -> tuple[int, int]:
             conn.execute(
                 """
                 UPDATE hn_items SET
-                    type = ?, by = ?, time = ?, title = ?, url = ?,
-                    text = ?, score = ?, descendants = ?, parent = ?,
-                    kids = ?, raw_json = ?, updated_at = ?
+                    deleted = ?, type = ?, by = ?, time = ?, title = ?, url = ?,
+                    text = ?, dead = ?, score = ?, descendants = ?, parent = ?,
+                    poll = ?, kids = ?, parts = ?, raw_json = ?, updated_at = ?
                 WHERE id = ?
                 """,
                 (
+                    1 if item.get("deleted") else 0,
                     item.get("type"),
                     item.get("by"),
                     item.get("time"),
                     item.get("title"),
                     item.get("url"),
                     item.get("text"),
+                    1 if item.get("dead") else 0,
                     item.get("score"),
                     item.get("descendants"),
                     item.get("parent"),
+                    item.get("poll"),
                     kids_json,
+                    parts_json,
                     raw_json,
                     now,
                     item["id"],
@@ -177,22 +192,27 @@ def upsert_hn_items(items: list[dict]) -> tuple[int, int]:
             conn.execute(
                 """
                 INSERT INTO hn_items
-                    (id, type, by, time, title, url, text, score,
-                     descendants, parent, kids, raw_json, fetched_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (id, deleted, type, by, time, title, url, text, dead,
+                     score, descendants, parent, poll, kids, parts,
+                     raw_json, fetched_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     item["id"],
+                    1 if item.get("deleted") else 0,
                     item.get("type"),
                     item.get("by"),
                     item.get("time"),
                     item.get("title"),
                     item.get("url"),
                     item.get("text"),
+                    1 if item.get("dead") else 0,
                     item.get("score"),
                     item.get("descendants"),
                     item.get("parent"),
+                    item.get("poll"),
                     kids_json,
+                    parts_json,
                     raw_json,
                     now,
                     now,

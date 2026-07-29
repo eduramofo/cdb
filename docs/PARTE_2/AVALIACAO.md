@@ -2,7 +2,7 @@
 
 > Verificação final: todos os requisitos da especificação foram atendidos.
 
-**Status:** ✅ 100% Concluída
+**Status:** ✅ 100% Concluída — 28/28 testes passando | 44/44 total
 
 ---
 
@@ -27,8 +27,10 @@
 | Carga inicial com limite configurável | ✅ | `POST /api/v1/hn/load?limit=N` — sem watermark, processa últimos N itens |
 | Carga incremental (apenas itens novos) | ✅ | Com watermark, processa `[last_processed_id + 1, maxitem]` |
 | Persistência com chave única | ✅ | `id` como PRIMARY KEY, UPSERT via `INSERT ... ON CONFLICT UPDATE` |
-| Dados consultáveis + JSON bruto | ✅ | 13 colunas dedicadas + `raw_json` com JSON completo |
-| Resiliência: itens nulos | ✅ | API retorna `null` → contabilizado como "ignorado" no relatório |
+| Dados consultáveis + JSON bruto | ✅ | 17 colunas dedicadas (incluindo `deleted`, `dead`, `poll`, `parts`) + `raw_json` |
+| Resiliência: itens nulos | ✅ | API retorna `null` → contabilizado como "ignorado" |
+| Resiliência: itens deletados | ✅ | `deleted: true` → contabilizado como "ignorado", não persiste |
+| Resiliência: itens mortos | ✅ | `dead: true` → persistido com flag |
 | Resiliência: timeouts | ✅ | 30s por request HTTP |
 | Resiliência: retries com backoff | ✅ | 3 tentativas com backoff exponencial (1s → 2s → 4s) |
 | Rate limiting | ✅ | 100ms de delay entre requests |
@@ -46,22 +48,22 @@
 | Persistência | ✅ 5/5 |
 | Relatório e Métricas | ✅ 3/3 |
 | CLI e Interface | ✅ 3/3 (API REST) |
-| Testes | ✅ 7/7 (21 testes) |
+| Testes | ✅ 7/7 (28 testes) |
 
 ---
 
 ## 4. Testes Automatizados
 
-**21/21 passando** em 7 categorias:
+**28/28 passando** em 7 categorias:
 
 | Categoria | Testes | O que cobre |
 |-----------|--------|-------------|
-| `TestHNItemModel` | 4 | Parse de story, comment, job, poll |
-| `TestUpsert` | 5 | Insert, update, misto, idempotência, raw_json |
+| `TestHNItemModel` | 7 | Parse de story, comment, job, poll, pollopt, deleted, dead |
+| `TestUpsert` | 8 | Insert, update, misto, idempotência, raw_json, deleted, dead, poll/parts |
 | `TestWatermark` | 3 | Leitura, escrita, sobrescrita |
 | `TestHNItemsByType` | 2 | DB vazio, agrupamento por tipo |
 | `TestHackerNewsClient` | 3 | Retry com sucesso, retry esgotado, null response |
-| `TestHnLoader` | 3 | Watermark avança, null item, relatório salvo |
+| `TestHnLoader` | 4 | Watermark avança, null item, deleted item, relatório salvo |
 | `TestLoadReport` | 1 | Serialização do modelo de relatório |
 
 ```bash
