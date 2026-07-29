@@ -1,7 +1,7 @@
 [project]
 name = "cdb"
 version = "0.1.0"
-description = "Add your description here"
+description = "Teste Técnico Prático — Desenvolvedor Sênior de Automação e Integração"
 readme = "README.md"
 authors = [
     { name = "Edu Fontes", email = "eduramofo@gmail.com" }
