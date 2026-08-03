@@ -9,7 +9,7 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -e .
-python -m pip install pytest pytest-asyncio
+python -m pip install pytest pytest-asyncio ruff
 playwright install chromium
 
 2) Rodar a API
