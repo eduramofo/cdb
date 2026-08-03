@@ -38,6 +38,9 @@ ruff check .
 
 printf "\n========================================\n"
 printf "Instalação concluída com sucesso!\n"
-printf "Para subir a API, rode:  cdb\n"
+printf "Ative o ambiente virtual (necessário a cada nova sessão):\n"
+printf "  source .venv/bin/activate\n"
+printf "Depois suba a API:\n"
+printf "  cdb\n"
 printf "Acesse http://localhost:8000 (ou /docs).\n"
 printf "========================================\n"

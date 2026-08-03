@@ -21,6 +21,7 @@ O INSTALL.sh executa em sequência:
 
 2) Rodar a API
 
+source .venv/bin/activate   # a cada nova sessão do terminal
 cdb
 
 Acesse http://localhost:8000 (ou /docs para o Swagger).
