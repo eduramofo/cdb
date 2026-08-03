@@ -3,7 +3,7 @@ import json
 import logging
 import re
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from playwright.async_api import Page
@@ -41,7 +41,7 @@ async def run_challenge(headed: bool = False) -> dict:
 
     browser, context, page = await launch_browser(headed=headed)
     start_time = time.time()
-    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
     try:
         await page.goto(RPA_URL, wait_until="domcontentloaded")

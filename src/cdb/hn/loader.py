@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from cdb.db.database import (
@@ -22,7 +22,7 @@ class HnLoader:
         self.report_dir.mkdir(parents=True, exist_ok=True)
 
     async def load(self, limit: int | None = None) -> LoadReport:
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
         start_iso = start_time.isoformat()
 
         max_item = await self.client.get_max_item_id()
@@ -117,7 +117,7 @@ class HnLoader:
                 f"inserted={ins}, updated={upd}, watermark={highest_processed}"
             )
 
-        end_time = datetime.now(UTC)
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
         report = LoadReport(
@@ -140,7 +140,7 @@ class HnLoader:
         return report
 
     def _save_report(self, report: LoadReport) -> None:
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         json_path = self.report_dir / f"hn_report_{timestamp}.json"
         json_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
 
