@@ -1,16 +1,23 @@
 SETUP — Rodar o projeto (sem uv)
 Requisito: Python >= 3.10
 
-1) Instalação
+1) Instalação (automática)
 
 git clone https://github.com/eduramofo/cdb.git
 cd cdb
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m pip install -e .
-python -m pip install pytest pytest-asyncio ruff
-playwright install chromium
+chmod +x check.sh INSTALL.sh
+bash check.sh          # valida pré-requisitos; pare se falhar
+bash INSTALL.sh        # instala, roda testes e lint de ponta a ponta
+
+O INSTALL.sh executa em sequência:
+  python -m venv .venv
+  source .venv/bin/activate
+  python -m pip install -r requirements.txt
+  python -m pip install -e .
+  python -m pip install pytest pytest-asyncio ruff
+  playwright install chromium
+  python -m pytest -v   # esperado: 44 passed
+  ruff check .
 
 2) Rodar a API
 
@@ -18,7 +25,7 @@ cdb
 
 Acesse http://localhost:8000 (ou /docs para o Swagger).
 
-3) Testes e lint
+3) Testes e lint (manual)
 
 python -m pytest -v   # esperado: 44 passed
 ruff check .
